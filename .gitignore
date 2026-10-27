@@ -1,0 +1,16 @@
+﻿node_modules/
+dist/
+.vite/
+test-results/
+
+.env
+.env.*
+!.env.example
+
+**/制作与排版资料/
+/报告/
+
+~$*
+*.tmp
+.DS_Store
+Thumbs.db

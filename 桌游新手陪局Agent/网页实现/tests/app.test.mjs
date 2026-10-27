@@ -1,0 +1,44 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {once} from 'node:events';
+import {createSession,transition,validSession,viewOf,scoreCards} from '../src/core.mjs';
+import {game} from '../src/game.mjs';
+import {answerQuestion,retrieve} from '../src/assistant.mjs';
+import {createApp,startLocalService} from '../server.mjs';
+import {questions} from './questions.mjs';
+const input=(question='没有筹码还能拒收吗')=>({gameId:game.id,gameVersion:game.version,stepIndex:2,question});
+test('人数与经验参数约束',()=>{for(const n of [2,8,3.5])assert.throws(()=>createSession(n,'new'));assert.throws(()=>createSession(4,'bad'));assert.equal(createSession(3,'new').playerCount,3);});
+test('举例不前进且不修改原状态',()=>{const s=createSession(4,'new');const n=transition(s,'more');assert.equal(n.stepIndex,0);assert.equal(n.examples,1);assert.equal(s.examples,0);assert.equal(s.logs.length,0);});
+test('暂停后阻止前进，人工确认恢复',()=>{let s=transition(createSession(4,'mixed'),'handover');assert.equal(transition(s,'next').stepIndex,0);s=transition(s,'resume');assert.equal(transition(s,'next').stepIndex,1);});
+test('全部步骤确认后才结束且不会越界',()=>{let s=createSession(4,'new');for(let i=0;i<game.steps.length-1;i++)s=transition(s,'next');assert.equal(s.status,'active');s=transition(s,'next');assert.equal(s.status,'completed');assert.deepEqual(transition(s,'next'),s);});
+test('熟手和新手文字不同，人数影响筹码提示',()=>{assert.notEqual(viewOf(createSession(4,'new')).explanation,viewOf(createSession(4,'familiar')).explanation);assert.equal(viewOf(createSession(6,'new')).chips,9);assert.equal(viewOf(createSession(7,'new')).chips,7);});
+test('失效和伪造进度不恢复',()=>{const s=createSession(4,'new');assert.equal(validSession({...s,gameVersion:'other'}),false);assert.equal(validSession({...s,stepIndex:900}),false);assert.equal(validSession({...s,status:'completed'}),false);assert.equal(validSession(JSON.parse(JSON.stringify(s))),true);});
+test('连续牌计分及输入检查',()=>{assert.equal(scoreCards([8,9,10,17],3),22);assert.equal(scoreCards([13,15,16],0),28);assert.equal(scoreCards([13,14,15,16],0),13);assert.equal(scoreCards([],11),-11);assert.throws(()=>scoreCards([8,8],0));});
+test('日志有界且回看重置例子',()=>{let s=createSession(4,'new');for(let i=0;i<320;i++)s=transition(s,'more');assert.equal(s.logs.length,300);s=transition(s,'next');s=transition(s,'back');assert.equal(s.examples,0);});
+for(const [question,expected]of questions)test('检索题 '+question,()=>{const ids=retrieve(question,0).map(x=>x.id);if(expected.length)assert.ok(expected.every(id=>ids.includes(id)),JSON.stringify(ids));else assert.equal(ids.length,0);});
+test('未配置模型时明确标记检索模式',async()=>{const a=await answerQuestion(input());assert.equal(a.mode,'evidence');assert.equal(a.reason,'not_configured');assert.equal(a.needsHuman,true);});
+test('无依据问题不调用模型',async()=>{const a=await answerQuestion(input('狼人杀预言家怎么玩'),{apiKey:'test-only',model:'test'},()=>{throw new Error('不得调用');});assert.equal(a.reason,'no_evidence');});
+test('游戏版本、步骤、长度、空问题校验',async()=>{await assert.rejects(answerQuestion({...input(),gameVersion:'bad'}));await assert.rejects(answerQuestion({...input(),stepIndex:-1}));await assert.rejects(answerQuestion(input('')));await assert.rejects(answerQuestion(input('a'.repeat(301))));});
+const config={apiKey:'test-placeholder-only',model:'mock-model',apiUrl:'https://model.invalid/chat/completions'};
+const upstream=value=>async()=>new Response(JSON.stringify({choices:[{message:{content:typeof value==='string'?value:JSON.stringify(value)}}]}),{status:200});
+test('模型接口契约通过且出处取自服务端，不采用模型伪造字段',async()=>{const a=await answerQuestion(input(),config,upstream({text:'没有筹码时必须拿牌。',sourceIds:['R6'],needsHuman:false,sources:[{text:'伪造'}]}));assert.equal(a.mode,'live');assert.equal(a.sources[0].id,'R6');assert.notEqual(a.sources[0].text,'伪造');});
+test('不存在或未检索的引用回退',async()=>{for(const id of ['R99','R2']){const a=await answerQuestion(input(),config,upstream({text:'假回答',sourceIds:[id],needsHuman:false}));assert.equal(a.mode,'fallback');assert.equal(a.needsHuman,true);}});
+test('非JSON和空引用回退',async()=>{const bad=await answerQuestion(input(),config,upstream('不是JSON'));assert.equal(bad.mode,'fallback');const empty=await answerQuestion(input(),config,upstream({text:'回答',sourceIds:[],needsHuman:false}));assert.equal(empty.mode,'fallback');});
+test('上游错误、请求失败和不安全配置回退，不泄露内部错误',async()=>{const fail=await answerQuestion(input(),config,async()=>{throw new Error('secret-server-detail');});assert.equal(fail.mode,'fallback');assert.ok(!JSON.stringify(fail).includes('secret-server-detail'));const http=await answerQuestion(input(),config,async()=>new Response('no',{status:503}));assert.equal(http.reason,'upstream_error');const unsafe=await answerQuestion(input(),{...config,apiUrl:'http://not-secure.invalid'});assert.equal(unsafe.reason,'configuration_error');});
+test('超时信号确实触发回退',async()=>{const mock=async(_,options)=>new Promise((resolve,reject)=>{const timer=setTimeout(()=>resolve(new Response('{}')),200);options.signal.addEventListener('abort',()=>{clearTimeout(timer);reject(new DOMException('Timed out','TimeoutError'));},{once:true});});const answer=await answerQuestion(input(),{...config,timeoutMs:10},mock);assert.equal(answer.mode,'fallback');assert.equal(answer.reason,'request_failed');});
+test('真实本地HTTP路由、静态资源与错误分支',async()=>{
+ const server=createApp();server.listen(0,'127.0.0.1');await once(server,'listening');const base='http://127.0.0.1:'+server.address().port;
+ try {
+  for(const url of ['/','/app.mjs','/styles.css','/core.mjs','/game.mjs'])assert.equal((await fetch(base+url)).status,200);
+  const status=await(await fetch(base+'/api/status')).json();assert.equal(status.modelConfigured,false);assert.ok(!JSON.stringify(status).includes('apiKey'));
+  const ask=await fetch(base+'/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input())});assert.equal(ask.status,200);assert.equal((await ask.json()).mode,'evidence');
+  const invalid=await fetch(base+'/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:'{'});assert.equal(invalid.status,400);
+  const large=await fetch(base+'/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:'a'.repeat(9000)});assert.equal(large.status,413);
+  const cross=await fetch(base+'/api/assistant',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://other.invalid'},body:JSON.stringify(input())});assert.equal(cross.status,403);
+  assert.equal((await fetch(base+'/.env')).status,404);assert.equal((await fetch(base+'/package.json')).status,404);
+ }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
+});
+test('30次每分钟限流',async()=>{const server=createApp();server.listen(0,'127.0.0.1');await once(server,'listening');const url='http://127.0.0.1:'+server.address().port+'/api/assistant';try{for(let i=0;i<30;i++)assert.equal((await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input())})).status,200);assert.equal((await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input())})).status,429);}finally{server.closeAllConnections();await new Promise(r=>server.close(r));}});
+test('启动器复用同一目录已有服务',async()=>{const first=await startLocalService({port:0});try{const again=await startLocalService({port:first.port});assert.equal(again.reused,true);assert.equal(again.server,null);assert.equal(again.url,first.url);}finally{first.server.closeAllConnections();await new Promise(r=>first.server.close(r));}});
+test('其他程序占用端口时使用下一端口',async()=>{const http=await import('node:http');const other=http.createServer((req,res)=>{res.writeHead(200,{'Content-Type':'application/json'});res.end('{"app":"other"}');});other.listen(0,'127.0.0.1');await once(other,'listening');let service;try{service=await startLocalService({port:other.address().port});assert.equal(service.reused,false);assert.ok(service.port>other.address().port);assert.equal(other.listening,true);}finally{if(service?.server){service.server.closeAllConnections();await new Promise(r=>service.server.close(r));}other.closeAllConnections();await new Promise(r=>other.close(r));}});
+test('无效端口及时报告错误',async()=>{await assert.rejects(startLocalService({port:-1}));await assert.rejects(startLocalService({port:70000}));});
