@@ -6,7 +6,7 @@
 
 ### 这份副本是什么
 
-`桌游新手陪局Agent-Vue` 是从原项目复制出来的独立版本。原文件夹没有修改，已有报告、资料和小程序原型继续保留。复制时排除了Git历史、实际 `.env`、依赖目录和构建缓存；需要模型配置时，在副本中自行填写 `.env`。
+`tablebuddy-vue` 是从原项目复制出来的独立版本。两个网页版分别保留自己的实现；课程报告在仓库外的本地材料中保留。复制时排除了Git历史、实际 `.env`、依赖目录和构建缓存；需要模型配置时，在副本中自行填写 `.env`。
 
 当前网页版本为0.4.0。之前的报告和“第5至6周”记录描述当时的实现，未改写为Vue版本；当前实现以本说明及两个README为准。
 
@@ -33,7 +33,7 @@
 ### 现在的结构
 
 ```text
-网页实现/
+web/
 ├─ index.html                 浏览器入口，只留Vue挂载点
 ├─ vite.config.mjs            .vue编译配置
 ├─ package.json               依赖和运行命令
@@ -90,7 +90,7 @@
 - 68项自动化检查通过，包含5项新增的Vue状态与请求检查。
 - 22项浏览器流程检查通过，覆盖中英切换、手机宽度、进度、错误、禁用存储及重置取消请求。
 - 6项启动检查通过，包含编译启动、模拟旧服务占端口、重复启动复用、开发代理及停止服务。
-- 截图和记录放在 `制作与排版资料/Vue重构检查/`。
+- 截图和记录放在 `authoring/vue-refactor-checks/`。
 
 模型测试仍为模拟响应，手机图片仍为浏览器尺寸模拟。没有用这些检查代替真实访谈、实地试用或付费验证。
 
@@ -104,7 +104,7 @@
 
 ### Scope
 
-This is an independent Vue edition copied from the original project. Original files are unchanged. Reports, reference materials and the earlier Mini Program are retained as historical documents. Git metadata, actual `.env` files, installed dependencies and build caches were excluded from copying. Configure model credentials separately if needed.
+This is an independent Vue edition copied from the original project. Original files are unchanged. Course reports are kept locally; reference materials remain in references/. Earlier Mini Program work provides historical context. Git metadata, actual `.env` files, installed dependencies and build caches were excluded from copying. Configure model credentials separately if needed.
 
 The web version is now 0.4.0. Historical reports describe their original milestones; current behavior is documented here and in the READMEs.
 
@@ -116,7 +116,7 @@ Shared styling remains in `src/styles.css`. Language, teaching/storage and cance
 
 ### Running and editing
 
-Install Node.js 22.12 or newer. Double-click `网页实现/start-web.cmd`, or run `npm ci` and `npm start` from `网页实现`. The launcher checks dependencies, builds `.vue` files with Vite, and starts the Node server. The browser receives compiled files from `dist/`; model credentials remain on the server.
+Install Node.js 22.12 or newer. Double-click `web/start-web.cmd`, or run `npm ci` and `npm start` from `web`. The launcher checks dependencies, builds `.vue` files with Vite, and starts the Node server. The browser receives compiled files from `dist/`; model credentials remain on the server.
 
 Use `npm run dev` for hot updates while editing. Open the printed Vite URL, usually on port5173; API requests are forwarded to the local Node backend. `npm start` rebuilds before serving, so restart it after source changes.
 
@@ -126,7 +126,7 @@ Folder fingerprints and versions distinguish the original and Vue services. Occu
 
 ### Validation
 
-68 automated checks, 22 browser-flow checks and 6 launcher checks passed. Evidence is stored in `制作与排版资料/Vue重构检查/`. The launcher checks simulate an older service occupying a port, exercise actual production/development startup, and stop owned processes afterwards.
+68 automated checks, 22 browser-flow checks and 6 launcher checks passed. Evidence is stored in `authoring/vue-refactor-checks/`. The launcher checks simulate an older service occupying a port, exercise actual production/development startup, and stop owned processes afterwards.
 
 Model checks use controlled mocks, and mobile screenshots simulate viewport sizes. Live models, physical phones, WeChat browsing, real users and payments still need validation.
 

@@ -14,7 +14,7 @@
 
 本仓库保留两个可以独立运行的网页版：**原生版 v0.3.0** 与 **Vue版 v0.4.0**。当前为学生课程实践原型，已实现规则检索和可配置的模型接口，真实模型效果、真人使用效果和付费意愿仍待验证。
 
-![开局搭子 TableBuddy 中文桌面界面](桌游新手陪局Agent-Vue/docs/images/desktop.png)
+![开局搭子 TableBuddy 中文桌面界面](tablebuddy-vue/docs/images/desktop.png)
 
 ### 可以做什么
 
@@ -36,7 +36,7 @@
 <summary>查看手机尺寸教学界面</summary>
 
 <p align="center">
-  <img src="桌游新手陪局Agent-Vue/docs/images/mobile.png" alt="开局搭子 TableBuddy 中文手机尺寸教学界面" width="320">
+  <img src="tablebuddy-vue/docs/images/mobile.png" alt="开局搭子 TableBuddy 中文手机尺寸教学界面" width="320">
 </p>
 
 手机图片来自浏览器尺寸模拟。
@@ -48,7 +48,7 @@
 | 对比项 | 原生网页版 | Vue网页版 |
 |---|---|---|
 | 版本 | v0.3.0 | v0.4.0 |
-| 目录 | `桌游新手陪局Agent/网页实现/` | `桌游新手陪局Agent-Vue/网页实现/` |
+| 目录 | `tablebuddy-vanilla/web/` | `tablebuddy-vue/web/` |
 | 前端 | HTML、CSS、JavaScript模块 | Vue 3单文件组件、Composition API、Vite |
 | 界面更新 | JavaScript操作页面元素 | Vue模板和响应式状态 |
 | 安装与编译 | 无需安装第三方npm运行依赖，无需编译 | 首次安装依赖，运行前编译 |
@@ -69,7 +69,7 @@
 
 #### Windows双击启动
 
-进入想运行的版本的 `网页实现` 文件夹，双击 `start-web.cmd`。
+进入想运行的版本的 `web` 文件夹，双击 `start-web.cmd`。
 
 Vue启动器会检查依赖，必要时自动安装，再编译并打开网页。两个版本默认使用 `http://127.0.0.1:3186`，端口冲突时尝试后续端口，请以终端显示的 `Local` 地址为准。
 
@@ -80,7 +80,7 @@ Vue启动器会检查依赖，必要时自动安装，再编译并打开网页�
 在仓库根目录打开终端：
 
 ```powershell
-cd "桌游新手陪局Agent/网页实现"
+cd "tablebuddy-vanilla/web"
 npm start
 ```
 
@@ -91,7 +91,7 @@ npm start
 在仓库根目录打开终端：
 
 ```powershell
-cd "桌游新手陪局Agent-Vue/网页实现"
+cd "tablebuddy-vue/web"
 npm ci
 npm start
 ```
@@ -106,7 +106,7 @@ npm run dev
 
 #### 同一Wi-Fi下使用手机
 
-在所选版本的 `网页实现` 目录，将 `.env.example` 复制为 `.env`，设置：
+在所选版本的 `web` 目录，将 `.env.example` 复制为 `.env`，设置：
 
 ```dotenv
 HOST=0.0.0.0
@@ -119,7 +119,7 @@ PORT=3186
 
 没有密钥时，网页使用**规则检索模式**，展示匹配的规则片段，不调用外部模型。
 
-需要模型解释时，在所选版本的 `网页实现/.env` 中配置自己的参数：
+需要模型解释时，在所选版本的 `web/.env` 中配置自己的参数：
 
 ```dotenv
 LLM_API_KEY=your_api_key_here
@@ -155,12 +155,11 @@ flowchart TD
 ```text
 .
 ├─ README.md                         两个版本的统一介绍
-├─ 桌游新手陪局Agent/
-│  ├─ 网页实现/                      原生网页版
-│  ├─ 小程序初步实现/                早期小程序原型
+├─ tablebuddy-vanilla/
+│  ├─ web/                          原生网页版
 │  └─ docs/images/                   界面截图
-├─ 桌游新手陪局Agent-Vue/
-│  ├─ 网页实现/
+├─ tablebuddy-vue/
+│  ├─ web/
 │  │  ├─ src/App.vue                 Vue页面总装
 │  │  ├─ src/components/             6个界面组件
 │  │  ├─ src/composables/            语言、教学和问答状态
@@ -170,15 +169,14 @@ flowchart TD
 │  │  ├─ scripts/                    编译启动与开发服务
 │  │  ├─ tests/                      开发验证
 │  │  └─ server.mjs                  资源与API服务
-│  ├─ Vue重构说明.md                 重构说明及修改入口
+│  ├─ vue-migration.md                 重构说明及修改入口
 │  └─ docs/images/                   Vue版截图
-└─ 报告/                             阶段报告、项目大纲与协作说明
+└─ .gitignore                        排除报告、依赖与制作资料
 ```
 
-- [原生版详细说明](桌游新手陪局Agent/网页实现/README.md)
-- [Vue版详细说明](桌游新手陪局Agent-Vue/网页实现/README.md)
-- [Vue重构说明](桌游新手陪局Agent-Vue/Vue重构说明.md)
-- [第5～6周架构与协作记录](报告/第5至6周_架构与协作记录.md)
+- [原生版详细说明](tablebuddy-vanilla/web/README.md)
+- [Vue版详细说明](tablebuddy-vue/web/README.md)
+- [Vue重构说明](tablebuddy-vue/vue-migration.md)
 
 ### 验证与当前进展
 
@@ -190,7 +188,7 @@ flowchart TD
 | 浏览器流程检查 | 19项通过 | 22项通过 |
 | 额外启动流程检查 | — | 6项通过 |
 
-原生版在其 `网页实现` 目录运行 `npm test`。Vue版在对应目录运行：
+原生版在其 `web` 目录运行 `npm test`。Vue版在对应目录运行：
 
 ```powershell
 npm test
@@ -220,7 +218,7 @@ The initial focus is on young adults gathering in mainland China. Hosts often re
 
 This repository contains two independently runnable web editions: **vanilla v0.3.0** and **Vue v0.4.0**. It is a student project prototype with rule retrieval and a configurable model adapter. Live model quality, effectiveness with real players and willingness to pay still need validation.
 
-![TableBuddy English desktop interface](桌游新手陪局Agent-Vue/docs/images/desktop-en.png)
+![TableBuddy English desktop interface](tablebuddy-vue/docs/images/desktop-en.png)
 
 ### Features
 
@@ -242,7 +240,7 @@ Potential revenue experiments include per-session access for hosts and onboardin
 <summary>English mobile-size preview</summary>
 
 <p align="center">
-  <img src="桌游新手陪局Agent-Vue/docs/images/mobile-en.png" alt="TableBuddy English teaching interface at a simulated mobile viewport" width="320">
+  <img src="tablebuddy-vue/docs/images/mobile-en.png" alt="TableBuddy English teaching interface at a simulated mobile viewport" width="320">
 </p>
 
 Mobile images are browser viewport simulations.
@@ -254,7 +252,7 @@ Mobile images are browser viewport simulations.
 | Item | Vanilla web edition | Vue web edition |
 |---|---|---|
 | Version | v0.3.0 | v0.4.0 |
-| Directory | `桌游新手陪局Agent/网页实现/` | `桌游新手陪局Agent-Vue/网页实现/` |
+| Directory | `tablebuddy-vanilla/web/` | `tablebuddy-vue/web/` |
 | Frontend | HTML, CSS and JavaScript modules | Vue 3 SFCs, Composition API and Vite |
 | UI updates | DOM manipulation and event handlers | Templates and reactive state |
 | Setup | No third-party npm runtime dependencies or build step | Dependency installation and frontend build |
@@ -267,7 +265,7 @@ Use the Vue edition for further development and the vanilla edition for comparis
 
 Requirements: **Node.js 22+** for vanilla, or **Node.js 22.12+** for Vue, plus a modern browser. The Vue edition needs internet access for its initial dependency installation.
 
-On Windows, open the chosen edition’s `网页实现` folder and double-click `start-web.cmd`. The Vue launcher checks dependencies and builds the frontend before opening the browser. The default URL is `http://127.0.0.1:3186`; use the printed Local URL if that port is occupied.
+On Windows, open the chosen edition’s `web` folder and double-click `start-web.cmd`. The Vue launcher checks dependencies and builds the frontend before opening the browser. The default URL is `http://127.0.0.1:3186`; use the printed Local URL if that port is occupied.
 
 Keep the service terminal open. Stop with `Ctrl+C`, then enter `Y` if Windows asks to terminate the batch job. Closing the browser does not stop the backend or release its port.
 
@@ -276,7 +274,7 @@ Keep the service terminal open. Stop with `Ctrl+C`, then enter `Y` if Windows as
 From the repository root:
 
 ```powershell
-cd "桌游新手陪局Agent/网页实现"
+cd "tablebuddy-vanilla/web"
 npm start
 ```
 
@@ -287,7 +285,7 @@ No `npm install` is required. Use `node server.mjs --open` to open the Windows b
 From the repository root:
 
 ```powershell
-cd "桌游新手陪局Agent-Vue/网页实现"
+cd "tablebuddy-vue/web"
 npm ci
 npm start
 ```
@@ -302,11 +300,11 @@ Open the printed development URL, usually `http://127.0.0.1:5173`. API requests 
 
 #### Phone on the same Wi-Fi
 
-In the chosen edition’s `网页实现` directory, copy `.env.example` to `.env`, set `HOST=0.0.0.0` and optionally `PORT=3186`, then stop the old service and restart. Use the computer’s actual LAN IP and active port on the phone, such as `http://192.168.1.20:3186`. Replace the example IP. `127.0.0.1` on a phone refers to the phone itself. Firewall rules or campus-network isolation may prevent access; physical-phone and WeChat testing remain pending.
+In the chosen edition’s `web` directory, copy `.env.example` to `.env`, set `HOST=0.0.0.0` and optionally `PORT=3186`, then stop the old service and restart. Use the computer’s actual LAN IP and active port on the phone, such as `http://192.168.1.20:3186`. Replace the example IP. `127.0.0.1` on a phone refers to the phone itself. Firewall rules or campus-network isolation may prevent access; physical-phone and WeChat testing remain pending.
 
 ### Model configuration and architecture
 
-Without credentials, **Rule lookup mode** returns matching excerpts without calling an external model. For optional model explanations, configure the selected edition’s server-side `网页实现/.env`:
+Without credentials, **Rule lookup mode** returns matching excerpts without calling an external model. For optional model explanations, configure the selected edition’s server-side `web/.env`:
 
 ```dotenv
 LLM_API_KEY=your_api_key_here
@@ -325,17 +323,15 @@ Both editions follow the architecture shown above: browser teaching state and lo
 
 | Path | Contents |
 |---|---|
-| `桌游新手陪局Agent/网页实现/` | Vanilla frontend, Node API and tests |
-| `桌游新手陪局Agent-Vue/网页实现/` | Vue frontend, Node API, build/start scripts and tests |
-| `桌游新手陪局Agent-Vue/网页实现/src/components/` | Header, setup, lesson, completion, rule lookup and source lists |
-| `桌游新手陪局Agent-Vue/网页实现/src/composables/` | Locale, teaching/storage and cancellable request state |
+| `tablebuddy-vanilla/web/` | Vanilla frontend, Node API and tests |
+| `tablebuddy-vue/web/` | Vue frontend, Node API, build/start scripts and tests |
+| `tablebuddy-vue/web/src/components/` | Header, setup, lesson, completion, rule lookup and source lists |
+| `tablebuddy-vue/web/src/composables/` | Locale, teaching/storage and cancellable request state |
 | Each edition’s `src/game.mjs` and `src/core.mjs` | Rules, teaching steps, state transitions and scoring |
 | Each edition’s `src/assistant.mjs` | Server-side retrieval, model adapter and fallback |
 | Each edition’s `docs/images/` | Screenshots |
-| `小程序初步实现/` within each edition | Historical Mini Program prototype |
-| `报告/` | Milestone reports, planning and collaboration records |
 
-Implementation details: [vanilla guide](桌游新手陪局Agent/网页实现/README.md#english), [Vue guide](桌游新手陪局Agent-Vue/网页实现/README.md#english), and [Vue migration guide](桌游新手陪局Agent-Vue/Vue重构说明.md#english).
+Implementation details: [vanilla guide](tablebuddy-vanilla/web/README.md#english), [Vue guide](tablebuddy-vue/web/README.md#english), and [Vue migration guide](tablebuddy-vue/vue-migration.md#english).
 
 ### Validation and status
 

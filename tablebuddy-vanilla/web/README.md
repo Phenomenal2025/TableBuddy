@@ -75,7 +75,7 @@
 npm test
 ```
 
-当前有32条AI构造的检索检查题，属于开发用样例，不是受访者数据。当前版本测试输出与桌面／手机尺寸截图保存在上一级 `制作与排版资料/中英双语检查`。浏览器检查脚本使用了本机制作环境的绝对Chrome与Playwright路径，换电脑后需调整。
+当前有32条AI构造的检索检查题，属于开发用样例，不是受访者数据。当前版本测试输出与桌面／手机尺寸截图保存在上一级 `authoring/bilingual-checks`。浏览器检查脚本使用了本机制作环境的绝对Chrome与Playwright路径，换电脑后需调整。
 
 导出的JSON只包含本机教学事件。不要把它叫作学习成绩、访谈记录或完整游戏日志。页面关闭后服务端不保存它，多个设备也不会共享同一局状态。
 
@@ -143,6 +143,6 @@ Run the automated suite from this directory:
 npm test
 ```
 
-The suite includes 32 constructed retrieval questions, not participant data. Browser checks use local Chrome and Playwright paths; adjust them when moving to another computer. Evidence and screenshots for this version are stored in `../制作与排版资料/中英双语检查`. Model responses in tests are controlled mocks, and mobile screenshots are viewport simulations.
+The suite includes 32 constructed retrieval questions, not participant data. Browser checks use local Chrome and Playwright paths; adjust them when moving to another computer. Evidence and screenshots for this version are stored in `../authoring/bilingual-checks`. Model responses in tests are controlled mocks, and mobile screenshots are viewport simulations.
 
 For the complete bilingual project overview, status and references, see the [root README](../README.md#english).

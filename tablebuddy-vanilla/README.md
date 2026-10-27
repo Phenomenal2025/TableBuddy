@@ -1,4 +1,4 @@
-# 开局搭子 TableBuddy · Vue Edition
+# 开局搭子 TableBuddy
 
 [中文](#中文) · [English](#english)
 
@@ -6,13 +6,11 @@
 
 中文品牌名为**开局搭子**，英文名为 **TableBuddy**。网页版中文模式同时显示两者，英文模式仅显示TableBuddy。
 
-这是原项目的独立Vue重构副本。原文件夹保持不变；课程报告和旧小程序作为历史材料保留，不代表Vue版本的最新架构。重构说明见[Vue重构说明](Vue重构说明.md)。
-
 面向青年桌游组局者的手机网页带新助手。
 
 开局搭子（TableBuddy）把新游戏的学习过程拆成简短的教学步骤，支持按需举例、回看、规则查询和人工确认，帮助组局者带新人完成第一轮游戏。项目优先关注中国大陆青年线下聚会的使用场景，以一桌共用一台设备的方式降低操作负担。
 
-当前为课程实践原型，版本为 **0.4.0**。已完成中英双语手机网页、教学状态管理、规则检索后端和可配置的模型接口；尚未公开部署，真实模型联调及真人使用效果仍待验证。
+当前为课程实践原型，版本为 **0.3.0**。已完成中英双语手机网页、教学状态管理、规则检索后端和可配置的模型接口；尚未公开部署，真实模型联调及真人使用效果仍待验证。
 
 ![开局搭子 TableBuddy 桌面界面](docs/images/desktop.png)
 
@@ -22,7 +20,7 @@
 - 减少组局者的重复解释，同时保留人与人交流和判断的空间。
 - 通过真实试用，比较教学耗时、规则错误、操作负担与再次使用意愿，并探索按场付费的可能性。
 
-项目的技术路线根据前期调研，从微信小程序调整为手机适配网页，以便开展现场试用和快速修改。前期小程序原型保留在仓库中。
+项目的技术路线根据前期调研，从微信小程序调整为手机适配网页，以便开展现场试用和快速修改。早期小程序探索作为项目背景保留，当前仓库提供两个网页版。
 
 ### 主要功能
 
@@ -51,13 +49,13 @@
 
 #### 环境要求
 
-- Node.js **22.12或以上版本**（建议使用较新的LTS版本）。
+- Node.js **22或以上版本**。
 - 支持JavaScript模块的现代浏览器。
-- 前端使用Vue 3与Vite。首次启动需要联网安装依赖，随后编译页面。
+- 当前运行时不依赖第三方npm包，无需先执行 `npm install`。
 
 #### Windows启动
 
-进入 `网页实现` 文件夹，双击：
+进入 `web` 文件夹，双击：
 
 ```text
 start-web.cmd
@@ -78,24 +76,19 @@ http://127.0.0.1:3186
 在仓库根目录执行：
 
 ```powershell
-cd "网页实现"
-npm ci
+cd "web"
 npm start
 ```
 
 希望同时自动打开Windows默认浏览器时，可执行：
 
 ```powershell
-npm start -- --open
+node server.mjs --open
 ```
-
-#### 修改Vue页面
-
-在 `网页实现` 中运行 `npm run dev`，打开终端显示的开发地址（通常是5173端口）。修改 `.vue` 后浏览器会自动更新；开发时的API请求会转发至本地后端。`npm start` 则先编译再运行，修改后需要重新启动。
 
 #### 手机访问
 
-默认服务只允许本机访问。同一Wi-Fi下使用手机测试时，在 `网页实现` 目录把 `.env.example` 复制为 `.env`，设置：
+默认服务只允许本机访问。同一Wi-Fi下使用手机测试时，在 `web` 目录把 `.env.example` 复制为 `.env`，设置：
 
 ```dotenv
 HOST=0.0.0.0
@@ -108,7 +101,7 @@ PORT=3186
 
 默认情况下，项目可以在没有模型密钥的环境下运行，页面显示 **规则检索模式**。该模式返回匹配的规则条目，不生成模型解释。
 
-如需模型解释，在 `网页实现/.env` 中配置自己的服务端参数：
+如需模型解释，在 `web/.env` 中配置自己的服务端参数：
 
 ```dotenv
 LLM_API_KEY=your_api_key_here
@@ -139,7 +132,7 @@ flowchart TD
     I -->|失败| G
 ```
 
-前端采用Vue 3单文件组件（`.vue`）、Composition API和Vite，后端沿用Node.js原生HTTP模块。教学进度由明确的状态数据维护，模型不直接决定玩家是否完成教学。
+前端采用HTML、CSS和JavaScript，后端采用Node.js原生HTTP模块。教学进度由明确的状态数据维护，模型不直接决定玩家是否完成教学。
 
 ### 仓库目录
 
@@ -147,17 +140,9 @@ flowchart TD
 .
 ├─ README.md                  项目介绍与快速开始
 ├─ docs/images/               GitHub首页展示图片
-├─ 网页实现/                  当前主要开发版本
-│  ├─ index.html              Vue挂载入口
-│  ├─ vite.config.mjs         Vue编译配置
-│  ├─ scripts/                 编译启动与开发服务器
+├─ web/                  当前主要开发版本
+│  ├─ public/                 页面、样式与浏览器交互
 │  ├─ src/
-│  │  ├─ App.vue              页面总装
-│  │  ├─ components/          6个Vue单文件组件
-│  │  ├─ composables/         语言、教学和问答状态
-│  │  ├─ i18n.mjs             中英文案
-│  │  ├─ main.mjs             Vue初始化
-│  │  ├─ styles.css           手机与桌面样式
 │  │  ├─ game.mjs             游戏规则、教学步骤与出处
 │  │  ├─ core.mjs             教学状态与计分逻辑
 │  │  └─ assistant.mjs        规则检索、模型适配与回退
@@ -165,12 +150,10 @@ flowchart TD
 │  ├─ server.mjs              网页与API服务
 │  ├─ start-web.cmd           Windows启动入口
 │  └─ .env.example            配置示例
-├─ 小程序初步实现/            第3～4周原型
-├─ 参考资料/                  课程要求等材料
-└─ 双周报告与协作说明         阶段成果文档
+└─ references/                  课程要求等材料
 ```
 
-详细配置与实现说明见[网页版说明](网页实现/README.md)，阶段分工见[第5～6周架构与协作记录](../报告/第5至6周_架构与协作记录.md)。
+详细配置与实现说明见[网页版说明](web/README.md)。课程报告和协作记录仅在本地保留，不上传至仓库。
 
 ### 规则与内容范围
 
@@ -180,7 +163,7 @@ flowchart TD
 
 ### 测试与当前进展
 
-在 `网页实现` 目录执行：
+在 `web` 目录执行：
 
 ```powershell
 npm test
@@ -188,12 +171,12 @@ npm test
 
 截至 **2026年10月27日**：
 
-- **68项自动化检查通过**，覆盖教学状态、计分、版本约束、中英切换、检索、模型接口契约、异常回退、HTTP服务与启动器。
+- **63项自动化检查通过**，覆盖教学状态、计分、版本约束、中英切换、检索、模型接口契约、异常回退、HTTP服务与启动器。
 - 其中包含 **32条构造的检索检查题**，属于开发样例，不是用户样本。
-- **22项浏览器流程检查通过**，包含中英文桌面与手机尺寸页面、语言偏好、查询途中切换语言及错误提示；检查宽度为360、390、430像素。
+- **19项浏览器流程检查通过**，包含中英文桌面与手机尺寸页面、语言偏好、查询途中切换语言及错误提示；检查宽度为360、390、430像素。
 - 模型接口检查使用模拟响应；尚未完成真实模型联调、手机真机与微信内访问测试，也未取得真人教学效果或付费数据。
 
-另有**6项启动检查通过**。`npm run test:browser` 使用项目内的Playwright和本机Chrome／Edge；没有可用浏览器时，先执行 `npx playwright install chromium`。首页图片来自本机浏览器自动化截图，其中手机图为尺寸模拟。
+`tests/browser-check.cjs` 使用本机制作环境的Chrome与Playwright路径，在其他电脑运行前需要调整。首页图片来自本机浏览器自动化截图，其中手机图为尺寸模拟。
 
 ### 后续计划
 
@@ -208,7 +191,7 @@ npm test
 
 项目发起人负责使用场景、目标人群和产品路线的判断，调研后提出从小程序转向手机适配网页。AI参与架构设计、代码生成与调整、规则整理和自动化检查。真人访谈、现场试玩和实际付费验证需要独立收集证据，不以代码测试替代。
 
-### 参考资料
+### references
 
 - [Node.js HTTP文档](https://nodejs.org/api/http.html)
 - [DeepSeek Chat Completions接口](https://api-docs.deepseek.com/api/create-chat-completion/)
@@ -216,13 +199,11 @@ npm test
 
 ## English
 
-This is an independent Vue refactor of the original project. Earlier reports and the Mini Program are retained as historical materials. See the [Vue migration guide](Vue重构说明.md#english).
-
 TableBuddy is a mobile-friendly board-game teaching assistant for young people who host game nights.
 
 It breaks the first game into short teaching steps, with optional examples, previous-step review, rule lookup and host confirmation. The initial focus is on young adults playing together in mainland China, sharing one device at the table.
 
-**Current version: 0.4.0 — student project prototype.** A bilingual web interface, teaching-state management, rule-retrieval backend and configurable model adapter are implemented. The project has not been publicly deployed; live model integration and effectiveness with real players still need validation.
+**Current version: 0.3.0 — student project prototype.** A bilingual web interface, teaching-state management, rule-retrieval backend and configurable model adapter are implemented. The project has not been publicly deployed; live model integration and effectiveness with real players still need validation.
 
 ![TableBuddy English desktop interface](docs/images/desktop-en.png)
 
@@ -232,7 +213,7 @@ It breaks the first game into short teaching steps, with optional examples, prev
 - Reduce repeated explanations for the host while keeping discussion and judgment at the table.
 - Evaluate teaching time, rule mistakes, interaction burden and reuse intent through real sessions, and explore payment per session.
 
-Following the project initiator’s research, the implementation shifted from a WeChat Mini Program to a mobile-friendly website for easier field testing and iteration. The earlier Mini Program prototype remains in this repository.
+Following the project initiator’s research, the implementation shifted from a WeChat Mini Program to a mobile-friendly website for easier field testing and iteration. This repository contains the two web editions; the earlier Mini Program work is historical context.
 
 ### Features
 
@@ -261,9 +242,9 @@ Chinese and English questions can be entered in either interface language. Retur
 
 ### Quick start
 
-Requirements: **Node.js 22.12 or later** and a modern browser. This edition uses Vue 3 and Vite; the first launch needs an internet connection to install dependencies.
+Requirements: **Node.js 22 or later** and a modern browser with JavaScript module support. The current runtime has no third-party npm dependencies, so `npm install` is not required.
 
-On Windows, open the `网页实现` folder and double-click `start-web.cmd`. The browser opens after the service is ready. The default address is:
+On Windows, open the `web` folder and double-click `start-web.cmd`. The browser opens after the service is ready. The default address is:
 
 ```text
 http://127.0.0.1:3186
@@ -274,24 +255,23 @@ If the port is occupied, the launcher tries later ports. Use the actual `Local` 
 The Windows launcher first tries the Node runtime bundled with Codex on the current computer, then system Node. On another computer, install Node and run from the repository root:
 
 ```powershell
-cd "网页实现"
-npm ci
+cd "web"
 npm start
 ```
 
 To also open the Windows default browser automatically:
 
 ```powershell
-npm start -- --open
+node server.mjs --open
 ```
 
-For a phone on the same Wi-Fi network, copy `网页实现/.env.example` to `网页实现/.env`, set `HOST=0.0.0.0`, and restart the old service. Open the computer’s actual LAN IP and active port on the phone, for example `http://192.168.1.20:3186`. Replace this example IP with your computer’s address. Campus-network isolation and firewall rules may prevent the connection. `127.0.0.1` on a phone refers to the phone itself, not your computer.
+For a phone on the same Wi-Fi network, copy `web/.env.example` to `web/.env`, set `HOST=0.0.0.0`, and restart the old service. Open the computer’s actual LAN IP and active port on the phone, for example `http://192.168.1.20:3186`. Replace this example IP with your computer’s address. Campus-network isolation and firewall rules may prevent the connection. `127.0.0.1` on a phone refers to the phone itself, not your computer.
 
 ### Model setup and operating modes
 
 Without model credentials, the website runs in **Rule lookup mode**. It returns matching excerpts without generating a model explanation.
 
-For optional model explanations, configure your own server-side values in `网页实现/.env`:
+For optional model explanations, configure your own server-side values in `web/.env`:
 
 ```dotenv
 LLM_API_KEY=your_api_key_here
@@ -322,7 +302,7 @@ flowchart TD
     I -->|Invalid| G
 ```
 
-The frontend uses Vue 3 Single-File Components (`.vue`), the Composition API and Vite. The backend uses Node.js’s native HTTP module. Explicit state data controls teaching progress; the model does not decide whether players have completed the guide. UI text is centralized in `src/i18n.mjs`.
+The frontend uses HTML, CSS and JavaScript. The backend uses Node.js’s native HTTP module. Explicit state data controls teaching progress; the model does not decide whether players have completed the guide. UI text is centralized in `public/i18n.mjs`.
 
 ### Repository guide
 
@@ -330,20 +310,15 @@ The frontend uses Vue 3 Single-File Components (`.vue`), the Composition API and
 |---|---|
 | `README.md` | Bilingual project overview and quick start |
 | `docs/images/` | Screenshots displayed on the repository homepage |
-| `网页实现/src/App.vue` | Application shell and component composition |
-| `网页实现/src/components/` | Header, setup, lesson, completion, sources and rule lookup |
-| `网页实现/src/composables/` | Reactive language, teaching and request state |
-| `网页实现/vite.config.mjs` | Vue build configuration |
-| `网页实现/scripts/` | Build-and-start launcher and development server |
-| `网页实现/src/game.mjs` | Versioned rules, teaching steps and their Chinese/English descriptions |
-| `网页实现/src/core.mjs` | Teaching state and scoring logic |
-| `网页实现/src/assistant.mjs` | Rule retrieval, model adapter and fallbacks |
-| `网页实现/server.mjs` | Web assets and API service |
-| `网页实现/tests/` | Logic, HTTP, localization and browser checks |
-| `小程序初步实现/` | Earlier Mini Program prototype |
-| `参考资料/` | Course requirements and supporting materials |
+| `web/public/` | Responsive UI, translations, browser interaction and local storage |
+| `web/src/game.mjs` | Versioned rules, teaching steps and their Chinese/English descriptions |
+| `web/src/core.mjs` | Teaching state and scoring logic |
+| `web/src/assistant.mjs` | Rule retrieval, model adapter and fallbacks |
+| `web/server.mjs` | Web assets and API service |
+| `web/tests/` | Logic, HTTP, localization and browser checks |
+| `references/` | Course requirements and supporting materials |
 
-See the [web implementation guide](网页实现/README.md) and the [weeks 5–6 collaboration record](../报告/第5至6周_架构与协作记录.md) for implementation context. The collaboration record is currently in Chinese.
+See the [web implementation guide](web/README.md) for implementation details. Course reports and collaboration records are kept locally and excluded from the repository.
 
 ### Game and content scope
 
@@ -353,7 +328,7 @@ The project teaches and looks up rules. It does not simulate the whole game, rec
 
 ### Validation and current status
 
-From `网页实现`, run:
+From `web`, run:
 
 ```powershell
 npm test
@@ -361,12 +336,12 @@ npm test
 
 As of **27 October 2026**:
 
-- **68 automated checks passed**, covering state, scoring, versions, localization, retrieval, model contracts, fallbacks, HTTP handling and startup behavior.
+- **63 automated checks passed**, covering state, scoring, versions, localization, retrieval, model contracts, fallbacks, HTTP handling and startup behavior.
 - The suite includes **32 constructed retrieval questions**, which are development examples rather than participant data.
-- **22 browser-flow checks passed**, covering Chinese/English desktop and mobile-size layouts, language persistence, language changes during a request and error messages. Checked widths are 360, 390 and 430 pixels.
+- **19 browser-flow checks passed**, covering Chinese/English desktop and mobile-size layouts, language persistence, language changes during a request and error messages. Checked widths are 360, 390 and 430 pixels.
 - Model tests use controlled mock responses. Live model quality, physical phones, WeChat’s in-app browser, real-player teaching outcomes and payment have not been validated.
 
-**6 launcher checks also passed.** Browser tests use the project’s Playwright dependency and installed Chrome/Edge. If neither a supported system browser nor a Playwright browser is installed, run `npx playwright install chromium` first. Screenshots come from the local browser; mobile images are viewport simulations.
+`tests/browser-check.cjs` uses local Chrome and Playwright paths from the authoring environment; adjust those paths on another computer. Screenshots come from the local browser; mobile images are viewport simulations.
 
 ### Next steps
 

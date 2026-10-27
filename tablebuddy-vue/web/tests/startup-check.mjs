@@ -3,7 +3,7 @@ import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import {resolve, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {writeFile} from 'node:fs/promises';
+import {mkdir, writeFile} from 'node:fs/promises';
 import http from 'node:http';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -74,7 +74,9 @@ try {
   await stop(development.child);
   await assert.rejects(fetch(devUrl, {signal: AbortSignal.timeout(1000)}));
   checks.push('停止开发服务后不再提供页面');
-  await writeFile(resolve(root, '../制作与排版资料/Vue重构检查/启动检查.json'), JSON.stringify({date: '2026-10-27', checks}, null, 2));
+  const outputDirectory = resolve(root, '../authoring/vue-refactor-checks');
+  await mkdir(outputDirectory, {recursive: true});
+  await writeFile(resolve(outputDirectory, 'startup-checks.json'), JSON.stringify({date: '2026-10-27', checks}, null, 2));
   console.log(JSON.stringify({startupChecks: checks.length}));
 } finally {
   for (const child of owned) await stop(child);

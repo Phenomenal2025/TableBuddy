@@ -73,11 +73,11 @@ npm run test:startup
 
 2026年10月27日，本副本通过 **68项自动化检查、22项浏览器流程检查和6项启动检查**。浏览器测试使用项目内Playwright，优先寻找系统Chrome／Edge，也可通过 `TABLEBUDDY_CHROME` 指定路径。没有可用浏览器时先运行 `npx playwright install chromium`。
 
-结果与截图保存在 `../制作与排版资料/Vue重构检查/`。32条检索题是构造的开发样例，模型接口测试使用模拟响应；手机图片是尺寸模拟，尚未验证手机真机、微信内浏览器或真实模型效果。教学事件导出不是访谈记录或学习成绩。
+结果与截图保存在 `../authoring/vue-refactor-checks/`。32条检索题是构造的开发样例，模型接口测试使用模拟响应；手机图片是尺寸模拟，尚未验证手机真机、微信内浏览器或真实模型效果。教学事件导出不是访谈记录或学习成绩。
 
 规则包为No Thanks!基础玩法，依据[AMIGO 2024英文规则](https://blog.amigo-spiele.de/content/ap/rule/02455-GB-AmigoRule.pdf)整理，不含特效卡。中英说明是项目教学摘要，使用前应核对实体游戏版本。
 
-更多解释见[Vue重构说明](../Vue重构说明.md)。本项目尚无账号、多人同步、支付或公开部署功能。
+更多解释见[Vue重构说明](../vue-migration.md)。本项目尚无账号、多人同步、支付或公开部署功能。
 
 ## English
 
@@ -128,8 +128,8 @@ npm run test:startup
 
 On October 27, 2026, **68 automated checks, 22 browser-flow checks and 6 launcher checks passed**. Browser tests use the local Playwright dependency and installed Chrome/Edge; `TABLEBUDDY_CHROME` can override the executable path. If no suitable browser is installed, run `npx playwright install chromium`.
 
-Evidence is in `../制作与排版资料/Vue重构检查/`. The 32 retrieval questions are constructed development examples. Model responses are mocked; mobile screenshots simulate viewport sizes. No real-device, WeChat, live model, user outcome or payment validation has been completed.
+Evidence is in `../authoring/vue-refactor-checks/`. The 32 retrieval questions are constructed development examples. Model responses are mocked; mobile screenshots simulate viewport sizes. No real-device, WeChat, live model, user outcome or payment validation has been completed.
 
 The candidate game is the base version of No Thanks!, summarized from [AMIGO’s 2024 English rules](https://blog.amigo-spiele.de/content/ap/rule/02455-GB-AmigoRule.pdf). Verify the physical edition before use. Neither language is an official translation.
 
-See the [migration guide](../Vue重构说明.md#english) and [root README](../README.md#english). Accounts, shared multiplayer state, payments and public hosting remain unimplemented.
+See the [migration guide](../vue-migration.md#english) and [root README](../README.md#english). Accounts, shared multiplayer state, payments and public hosting remain unimplemented.

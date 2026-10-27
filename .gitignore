@@ -7,7 +7,7 @@ test-results/
 .env.*
 !.env.example
 
-**/制作与排版资料/
+**/authoring/
 /报告/
 
 ~$*
