@@ -6,7 +6,7 @@
 
 中文品牌名为**开局搭子**，英文名为 **TableBuddy**。网页版中文模式同时显示两者，英文模式仅显示TableBuddy。
 
-当前版本0.3.0。沿用前期教学状态的思路，将界面改成中英双语手机网页，并增加真实HTTP后端、规则检索、模型接口适配和异常回退。旧的小程序目录继续保留。页面顶部可以选择中文或English，切换时保留教学进度，并记住本机语言偏好。
+当前版本见[package.json](package.json)。沿用前期教学状态的思路，将界面改成中英双语手机网页，并增加真实HTTP后端、规则检索、模型接口适配和异常回退。页面顶部可以选择中文或English，切换时保留教学进度，并记住本机语言偏好。
 
 ### 先打开看看
 
@@ -16,7 +16,7 @@
 4. 没有模型配置时，页面明确显示“规则检索模式”。它会返回相关原文，不会冒充模型解释。
 5. 结束预览后在命令窗口按Ctrl+C。关闭窗口后网页无法继续访问。
 
-有Node.js 22或以上版本时，也可在本目录运行 `npm start`，无需先安装依赖。启动脚本优先使用本机已有的工作区Node，找不到时使用系统Node。移动到别的电脑时，需要自行安装Node。`npm start`只启动服务；希望同时自动打开浏览器，可运行 `node server.mjs --open`。
+有Node.js 22或以上版本时，也可在本目录运行 `npm start`，无需先安装依赖。启动脚本使用系统安装的Node。移动到别的电脑时，需要自行安装Node。`npm start`只启动服务；希望同时自动打开浏览器，可运行 `node server.mjs --open`。
 
 ### 在同一Wi-Fi下用手机试
 
@@ -71,13 +71,25 @@
 
 ### 检查与证据
 
+版本号以各网页版的 `package.json` 为准；服务端状态接口从该文件读取版本。检查数量、通过情况与执行日期以本次命令输出和生成的报告为准。
+
+在所选版本的 `web` 目录执行：
+
 ```powershell
+npm ci
 npm test
+npm run test:browser
 ```
 
-当前有32条AI构造的检索检查题，属于开发用样例，不是受访者数据。当前版本测试输出与桌面／手机尺寸截图保存在上一级 `authoring/bilingual-checks`。浏览器检查脚本使用了本机制作环境的绝对Chrome与Playwright路径，换电脑后需调整。
+Vue版另提供 `npm run test:startup`，覆盖生产启动、重复启动、端口避让、开发代理及直接运行Vite。两个版本都使用项目内的Playwright；没有可用浏览器时，先运行 `npx playwright install chromium`。可用 `TABLEBUDDY_CHROME` 指定浏览器程序。
 
-导出的JSON只包含本机教学事件。不要把它叫作学习成绩、访谈记录或完整游戏日志。页面关闭后服务端不保存它，多个设备也不会共享同一局状态。
+浏览器结果保存在 `test-results/browser-check/`，启动结果保存在 `test-results/startup-check/`，均由Git忽略。`TABLEBUDDY_EVIDENCE_DIR` 可覆盖结果根目录；脚本会在其下分别建立 `browser-check/` 和 `startup-check/`。生成报告记录本次执行时间。
+
+检查覆盖教学状态、参数错误、双语提示、问答日志、重置、规则数据、限流、静态缓存和HTTP接口。模型分支使用可控模拟响应，手机布局使用浏览器尺寸模拟；真实模型、手机真机、微信内访问与真人使用效果列入后续验证。
+
+日志覆盖开局前查询及当前教学过程，包含暂停和结束后的查询事件；导出JSON的 `setupEvents` 保存开局前事件，`session.logs` 保存教学会话事件，`phase` 标记查询阶段。重置会同时清除这些记录、问题输入和进行中的查询。
+
+本地API支持curl等命令行工具省略Origin头。浏览器跨站来源会被拒绝；Origin校验用于浏览器来源限制。公网部署时应在网关配置身份认证和访问配额。
 
 ### 开发参考
 
@@ -85,23 +97,23 @@ npm test
 - [DeepSeek Chat Completions](https://api-docs.deepseek.com/api/create-chat-completion/)
 - [MDN localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
 
-版本日期：2026年10月27日。
+版本号与实际执行时间分别见package.json和测试报告。
 
 ## English
 
-TableBuddy is a bilingual mobile-web teaching prototype for board-game hosts. Version **0.3.0** adds a Chinese/English switch for the interface, teaching steps, examples, source excerpts, lookup responses and error messages. The language preference is stored in this browser; switching does not reset the current teaching step.
+TableBuddy is a bilingual mobile-web teaching prototype for board-game hosts. The interface provides a Chinese/English switch for the interface, teaching steps, examples, source excerpts, lookup responses and error messages. The language preference is stored in this browser; switching does not reset the current teaching step.
 
 ### Run locally
 
 Use **Node.js 22 or later**. There are no third-party runtime dependencies to install.
 
-On Windows, double-click `start-web.cmd` in this directory. It starts the backend and opens your browser. The launcher uses Codex’s bundled Node if available, otherwise system Node. For a command-line start from this directory:
+On Windows, double-click `start-web.cmd` in this directory. It starts the backend and opens your browser. The launcher uses system Node. For a command-line start from this directory:
 
 ```powershell
 npm start
 ```
 
-To open the Windows default browser as well:
+To open the system browser as well:
 
 ```powershell
 node server.mjs --open
@@ -139,10 +151,24 @@ The first candidate rules package is the base game of No Thanks!, using [AMIGO�
 
 Run the automated suite from this directory:
 
+Each web project's `package.json` is the version source; the server derives its status version from it. Test totals, results and execution dates come from the current run and generated reports.
+
+From the selected edition's `web` directory:
+
 ```powershell
+npm ci
 npm test
+npm run test:browser
 ```
 
-The suite includes 32 constructed retrieval questions, not participant data. Browser checks use local Chrome and Playwright paths; adjust them when moving to another computer. Evidence and screenshots for this version are stored in `../authoring/bilingual-checks`. Model responses in tests are controlled mocks, and mobile screenshots are viewport simulations.
+The Vue edition also provides `npm run test:startup`, covering production startup, reuse, occupied ports, the development proxy and direct Vite invocation. Both browser suites use project-local Playwright. Run `npx playwright install chromium` if no suitable browser is installed, or set `TABLEBUDDY_CHROME` to a browser executable.
+
+Browser evidence is written to `test-results/browser-check/`, and startup evidence to `test-results/startup-check/`. Both are ignored by Git. `TABLEBUDDY_EVIDENCE_DIR` overrides the output base; scripts create separate `browser-check/` and `startup-check/` subdirectories. Reports record their actual execution time.
+
+Checks cover state, invalid inputs, localized feedback, question logs, reset, rule data, rolling rate limits, asset caching and HTTP behavior. Model responses are mocked and mobile layouts use viewport simulation; live models, physical phones, WeChat and real-player outcomes remain evaluation tasks.
+
+Exports include setup queries in `setupEvents` and teaching-session events in `session.logs`, including paused and completed-session queries. Query events carry a `phase` field. Reset clears these records, the typed question and any pending request.
+
+Local command-line clients may omit Origin. Browser cross-site requests are rejected; Origin checks restrict browser sources. Public deployments should configure authentication and access quotas at the gateway.
 
 For the complete bilingual project overview, status and references, see the [root README](../README.md#english).

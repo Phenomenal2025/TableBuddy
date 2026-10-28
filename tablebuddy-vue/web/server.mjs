@@ -3,15 +3,18 @@ import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {resolve,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
-import {spawn} from 'node:child_process';
+import {createRequire} from 'node:module';
+import {openBrowser} from './src/open-browser.mjs';
+import {createRateLimiter} from './src/rate-limit.mjs';
 import {answerQuestion} from './src/assistant.mjs';
 import {game} from './src/game.mjs';
 const ROOT=dirname(fileURLToPath(import.meta.url));
-const APP_VERSION='0.4.0-vue';
+export const APP_VERSION=createRequire(import.meta.url)('./package.json').version+'-vue';
 const INSTANCE=createHash('sha256').update(ROOT).digest('hex').slice(0,12);
 // Only compiled browser files may be served. Never expose source, .env or node_modules.
 const ASSET_TYPES={'.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.woff2':'font/woff2'};
 function browserAsset(path) {
+  if(path==='/favicon.svg'||path==='/favicon.ico')return ['dist/favicon.svg','image/svg+xml'];
   if(path==='/')return ['dist/index.html','text/html; charset=utf-8'];
   if(!/^\/assets\/[A-Za-z0-9_.-]+\.(js|css|svg|png|woff2)$/.test(path))return null;
   const extension=path.slice(path.lastIndexOf('.'));
@@ -19,8 +22,8 @@ function browserAsset(path) {
 }
 function headers(res){res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");}
 function json(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
-export function createApp({config={},fetchImpl=fetch}={}) {
-  const buckets=new Map();
+export function createApp({config={},fetchImpl=fetch,now=Date.now}={}) {
+  const limiter=createRateLimiter({now});
   const server=http.createServer(async(req,res)=>{
     headers(res);
     const en=String(req.headers['accept-language']||'').toLowerCase().startsWith('en');
@@ -29,12 +32,11 @@ export function createApp({config={},fetchImpl=fetch}={}) {
       const path=new URL(req.url,'http://localhost').pathname;
       if(req.method==='GET'&&path==='/api/status')return json(res,200,{app:'peiju-onboarding',instance:INSTANCE,version:APP_VERSION,gameId:game.id,modelConfigured:!!(config.apiKey&&config.model),mode:config.apiKey&&config.model?'model-ready':'evidence'});
       if(req.method==='POST'&&path==='/api/assistant') {
+        if(req.headers['sec-fetch-site']==='cross-site')return fail(403,'请求来源不匹配','Request origin does not match');
         if(req.headers.origin&&req.headers.origin!=='http://'+req.headers.host&&req.headers.origin!=='https://'+req.headers.host)return fail(403,'请求来源不匹配','Request origin does not match');
         if(!String(req.headers['content-type']||'').startsWith('application/json'))return fail(415,'请发送JSON','Send JSON content');
-        const now=Date.now(),ip=req.socket.remoteAddress;
-        for(const [key,value]of buckets)if(now-value.at>60000)buckets.delete(key);
-        const bucket=buckets.get(ip)||{at:now,count:0};bucket.count++;buckets.set(ip,bucket);
-        if(bucket.count>30)return fail(429,'请求过于频繁，请稍后再试','Too many requests. Please try again shortly.');
+        const rate=limiter.take(req.socket.remoteAddress);
+        if(!rate.allowed){res.setHeader('Retry-After',String(rate.retryAfter));return fail(429,'请求过于频繁，请稍后再试','Too many requests. Please try again shortly.');}
         if(Number(req.headers['content-length'])>8192){req.resume();return fail(413,'请求过长','Request body is too large');}
         const chunks=[];let size=0;
         for await(const chunk of req){size+=chunk.length;if(size>8192){fail(413,'请求过长','Request body is too large');req.resume();return;}chunks.push(chunk);}
@@ -47,11 +49,13 @@ export function createApp({config={},fetchImpl=fetch}={}) {
         let contents;
         try {contents=await readFile(resolve(ROOT,file));}
         catch(error){if(error.code==='ENOENT')return fail(404,'页面尚未构建或资源不存在，请运行 npm run build','Build the frontend with npm run build, or check the asset URL');throw error;}
-        res.writeHead(200,{'Content-Type':type,'Cache-Control':'no-cache'});return res.end(contents);
+        res.writeHead(200,{'Content-Type':type,'Cache-Control':/^dist\/assets\/.+-[A-Za-z0-9_-]{8,}\.[a-z0-9]+$/.test(file)?'public, max-age=31536000, immutable':'no-cache'});return res.end(contents);
       }
       fail(404,'资源不存在','Resource not found');
     }catch(error){if(!res.headersSent)json(res,error.status||500,{error:error.status?error.message:(en?'Service temporarily unavailable':'服务暂时不可用')});else res.end();}
   });
+  server.once('close',()=>limiter.dispose());
+  server.once('error',()=>limiter.dispose());
   server.requestTimeout=20000;server.headersTimeout=10000;
   return server;
 }
@@ -74,11 +78,6 @@ export async function startLocalService({host='127.0.0.1',port=3186,config={},at
     }
   }
   throw new Error('连续端口都不可用，请在.env设置其他PORT。');
-}
-function openBrowser(url) {
-  if(process.platform!=='win32')return;
-  const child=spawn('rundll32.exe',['url.dll,FileProtocolHandler',url],{stdio:'ignore',detached:true,windowsHide:true});
-  child.on('error',()=>console.log('浏览器未能自动打开，请手动访问上面的地址。'));child.unref();
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   try{process.loadEnvFile(resolve(ROOT,'.env'));}catch(error){if(error.code!=='ENOENT')throw error;}

@@ -89,3 +89,32 @@ test('Vue问答切换语言取消请求，迟到响应不会覆盖新语言', as
     assert.equal(answered, 0);
   } finally { scope.stop(); globalThis.fetch = original; }
 });
+
+test('Vue shows localized state errors and keeps warnings through language changes', () => {
+  const state = useTeaching(ref('en'), memoryStorage());
+  assert.equal(state.start(2, 'new'), false);
+  assert.equal(state.messageKey.value, 'invalidPlayers');
+  assert.doesNotMatch(translate('en', state.messageKey.value), /[\u3400-\u9fff]/);
+  state.languageChanged();
+  assert.equal(state.messageKey.value, 'invalidPlayers');
+  state.start(4, 'new'); state.act('bad');
+  assert.equal(state.messageKey.value, 'unknownEvent');
+  state.session.value = {...state.session.value, stepIndex: 1000};
+  state.act('next');
+  assert.equal(state.messageKey.value, 'sessionInvalid');
+  assert.equal(state.view.value, null);
+});
+
+test('setup questions persist, export before teaching, and reset with the session', () => {
+  const storage = memoryStorage();
+  const state = useTeaching(ref('en'), storage);
+  state.act('question');
+  const before = state.exportLog();
+  assert.equal(before.session, null);
+  assert.equal(before.setupEvents[0].phase, 'setup');
+  const restored = useTeaching(ref('en'), storage);
+  restored.start(4, 'new');
+  assert.equal(restored.exportLog().setupEvents.length, 1);
+  restored.reset();
+  assert.equal(restored.exportLog(), null);
+});

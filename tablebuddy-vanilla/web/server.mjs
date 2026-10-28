@@ -3,17 +3,19 @@ import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {resolve,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
-import {spawn} from 'node:child_process';
+import {createRequire} from 'node:module';
+import {openBrowser} from './src/open-browser.mjs';
+import {createRateLimiter} from './src/rate-limit.mjs';
 import {answerQuestion} from './src/assistant.mjs';
 import {game} from './src/game.mjs';
 const ROOT=dirname(fileURLToPath(import.meta.url));
-const APP_VERSION='0.3.0';
+export const APP_VERSION=createRequire(import.meta.url)('./package.json').version;
 const INSTANCE=createHash('sha256').update(ROOT).digest('hex').slice(0,12);
-const ASSETS=new Map([['/',['public/index.html','text/html; charset=utf-8']],['/app.mjs',['public/app.mjs','text/javascript; charset=utf-8']],['/i18n.mjs',['public/i18n.mjs','text/javascript; charset=utf-8']],['/styles.css',['public/styles.css','text/css; charset=utf-8']],['/game.mjs',['src/game.mjs','text/javascript; charset=utf-8']],['/core.mjs',['src/core.mjs','text/javascript; charset=utf-8']]]);
+const ASSETS=new Map([['/favicon.svg',['public/favicon.svg','image/svg+xml']],['/favicon.ico',['public/favicon.svg','image/svg+xml']],['/',['public/index.html','text/html; charset=utf-8']],['/app.mjs',['public/app.mjs','text/javascript; charset=utf-8']],['/i18n.mjs',['public/i18n.mjs','text/javascript; charset=utf-8']],['/styles.css',['public/styles.css','text/css; charset=utf-8']],['/game.mjs',['src/game.mjs','text/javascript; charset=utf-8']],['/core.mjs',['src/core.mjs','text/javascript; charset=utf-8']],['/core-errors.mjs',['src/core-errors.mjs','text/javascript; charset=utf-8']],['/session-messages.mjs',['src/session-messages.mjs','text/javascript; charset=utf-8']]]);
 function headers(res){res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");}
 function json(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
-export function createApp({config={},fetchImpl=fetch}={}) {
-  const buckets=new Map();
+export function createApp({config={},fetchImpl=fetch,now=Date.now}={}) {
+  const limiter=createRateLimiter({now});
   const server=http.createServer(async(req,res)=>{
     headers(res);
     const en=String(req.headers['accept-language']||'').toLowerCase().startsWith('en');
@@ -22,12 +24,11 @@ export function createApp({config={},fetchImpl=fetch}={}) {
       const path=new URL(req.url,'http://localhost').pathname;
       if(req.method==='GET'&&path==='/api/status')return json(res,200,{app:'peiju-onboarding',instance:INSTANCE,version:APP_VERSION,gameId:game.id,modelConfigured:!!(config.apiKey&&config.model),mode:config.apiKey&&config.model?'model-ready':'evidence'});
       if(req.method==='POST'&&path==='/api/assistant') {
+        if(req.headers['sec-fetch-site']==='cross-site')return fail(403,'请求来源不匹配','Request origin does not match');
         if(req.headers.origin&&req.headers.origin!=='http://'+req.headers.host&&req.headers.origin!=='https://'+req.headers.host)return fail(403,'请求来源不匹配','Request origin does not match');
         if(!String(req.headers['content-type']||'').startsWith('application/json'))return fail(415,'请发送JSON','Send JSON content');
-        const now=Date.now(),ip=req.socket.remoteAddress;
-        for(const [key,value]of buckets)if(now-value.at>60000)buckets.delete(key);
-        const bucket=buckets.get(ip)||{at:now,count:0};bucket.count++;buckets.set(ip,bucket);
-        if(bucket.count>30)return fail(429,'请求过于频繁，请稍后再试','Too many requests. Please try again shortly.');
+        const rate=limiter.take(req.socket.remoteAddress);
+        if(!rate.allowed){res.setHeader('Retry-After',String(rate.retryAfter));return fail(429,'请求过于频繁，请稍后再试','Too many requests. Please try again shortly.');}
         if(Number(req.headers['content-length'])>8192){req.resume();return fail(413,'请求过长','Request body is too large');}
         const chunks=[];let size=0;
         for await(const chunk of req){size+=chunk.length;if(size>8192){fail(413,'请求过长','Request body is too large');req.resume();return;}chunks.push(chunk);}
@@ -40,6 +41,8 @@ export function createApp({config={},fetchImpl=fetch}={}) {
       fail(404,'资源不存在','Resource not found');
     }catch(error){if(!res.headersSent)json(res,error.status||500,{error:error.status?error.message:(en?'Service temporarily unavailable':'服务暂时不可用')});else res.end();}
   });
+  server.once('close',()=>limiter.dispose());
+  server.once('error',()=>limiter.dispose());
   server.requestTimeout=20000;server.headersTimeout=10000;
   return server;
 }
@@ -62,11 +65,6 @@ export async function startLocalService({host='127.0.0.1',port=3186,config={},at
     }
   }
   throw new Error('连续端口都不可用，请在.env设置其他PORT。');
-}
-function openBrowser(url) {
-  if(process.platform!=='win32')return;
-  const child=spawn('rundll32.exe',['url.dll,FileProtocolHandler',url],{stdio:'ignore',detached:true,windowsHide:true});
-  child.on('error',()=>console.log('浏览器未能自动打开，请手动访问上面的地址。'));child.unref();
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   try{process.loadEnvFile(resolve(ROOT,'.env'));}catch(error){if(error.code!=='ENOENT')throw error;}

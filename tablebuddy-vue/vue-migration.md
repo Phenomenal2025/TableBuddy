@@ -8,7 +8,7 @@
 
 `tablebuddy-vue` 是从原项目复制出来的独立版本。两个网页版分别保留自己的实现；课程报告在仓库外的本地材料中保留。复制时排除了Git历史、实际 `.env`、依赖目录和构建缓存；需要模型配置时，在副本中自行填写 `.env`。
 
-当前网页版本为0.4.0。之前的报告和“第5至6周”记录描述当时的实现，未改写为Vue版本；当前实现以本说明及两个README为准。
+当前网页版本见[package.json](web/package.json)。之前的报告和“第5至6周”记录描述当时的实现，未改写为Vue版本；当前实现以本说明及两个README为准。
 
 ### `.vue` 到底改变了什么
 
@@ -85,14 +85,11 @@ web/
 
 运行中的原项目与Vue副本通过文件夹指纹和版本区分。端口冲突时Vue副本尝试后续端口，不会误用原项目服务。浏览器进度按访问来源（协议、主机、端口）存储；换到另一个端口，通常需要重新开始，两个版本不会自动同步进度。
 
-### 已验证与待验证
+### 验证方式
 
-- 68项自动化检查通过，包含5项新增的Vue状态与请求检查。
-- 22项浏览器流程检查通过，覆盖中英切换、手机宽度、进度、错误、禁用存储及重置取消请求。
-- 6项启动检查通过，包含编译启动、模拟旧服务占端口、重复启动复用、开发代理及停止服务。
-- 截图和记录放在 `authoring/vue-refactor-checks/`。
+在web目录运行 `npm test`、`npm run test:browser` 和 `npm run test:startup`。检查结果和数量以当前运行输出为准。浏览器证据位于 `web/test-results/browser-check/`，启动证据位于 `web/test-results/startup-check/`；报告使用实际执行时间。
 
-模型测试仍为模拟响应，手机图片仍为浏览器尺寸模拟。没有用这些检查代替真实访谈、实地试用或付费验证。
+`TABLEBUDDY_EVIDENCE_DIR` 可以覆盖证据根目录。模型分支采用模拟响应，手机页面采用尺寸模拟；后续开展真实服务和现场验证。
 
 ### 开发参考
 
@@ -106,7 +103,7 @@ web/
 
 This is an independent Vue edition copied from the original project. Original files are unchanged. Course reports are kept locally; reference materials remain in references/. Earlier Mini Program work provides historical context. Git metadata, actual `.env` files, installed dependencies and build caches were excluded from copying. Configure model credentials separately if needed.
 
-The web version is now 0.4.0. Historical reports describe their original milestones; current behavior is documented here and in the READMEs.
+The current web version is in [package.json](web/package.json). Historical reports describe their original milestones; current behavior is documented here and in the READMEs.
 
 ### What changed
 
@@ -126,8 +123,8 @@ Folder fingerprints and versions distinguish the original and Vue services. Occu
 
 ### Validation
 
-68 automated checks, 22 browser-flow checks and 6 launcher checks passed. Evidence is stored in `authoring/vue-refactor-checks/`. The launcher checks simulate an older service occupying a port, exercise actual production/development startup, and stop owned processes afterwards.
+Run `npm test`, `npm run test:browser` and `npm run test:startup` from `web`. Current command output supplies test totals and results. Browser evidence is in `web/test-results/browser-check/`; startup evidence is in `web/test-results/startup-check/`. Reports use the actual execution time. `TABLEBUDDY_EVIDENCE_DIR` overrides the output base.
 
-Model checks use controlled mocks, and mobile screenshots simulate viewport sizes. Live models, physical phones, WeChat browsing, real users and payments still need validation.
+Model checks use controlled mocks and mobile screenshots simulate viewport sizes. Live services and real-world evaluation are subsequent tasks.
 
 References: [Vue SFCs](https://vuejs.org/guide/scaling-up/sfc.html), [Vue reactivity](https://vuejs.org/guide/essentials/reactivity-fundamentals.html), [Vite guide](https://vite.dev/guide/).

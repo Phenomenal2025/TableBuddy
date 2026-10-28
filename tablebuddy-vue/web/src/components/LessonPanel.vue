@@ -16,7 +16,7 @@ const {t} = useLocale();
     <progress id="progress" :value="view.index" :max="view.total" :aria-label="t('lessonLabel')"></progress>
     <h2 id="step-title">{{ view.title }}</h2>
     <p id="explanation" class="lesson-text">{{ view.explanation }}</p>
-    <p id="setup-chips" class="muted">{{ session.stepIndex === 1 ? t('chips', {players: session.playerCount, chips: view.chips}) : '' }}</p>
+    <p id="setup-chips" class="muted">{{ view.showSetupChips ? t('chips', {players: session.playerCount, chips: view.chips}) : '' }}</p>
     <div v-show="view.showExample" id="example" class="example">
       <span>{{ t('example') }}</span><p id="example-text">{{ view.example }}</p>
     </div>

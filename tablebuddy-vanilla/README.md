@@ -10,7 +10,7 @@
 
 开局搭子（TableBuddy）把新游戏的学习过程拆成简短的教学步骤，支持按需举例、回看、规则查询和人工确认，帮助组局者带新人完成第一轮游戏。项目优先关注中国大陆青年线下聚会的使用场景，以一桌共用一台设备的方式降低操作负担。
 
-当前为课程实践原型，版本为 **0.3.0**。已完成中英双语手机网页、教学状态管理、规则检索后端和可配置的模型接口；尚未公开部署，真实模型联调及真人使用效果仍待验证。
+当前为课程实践原型，版本号见[package.json](web/package.json)。已完成中英双语手机网页、教学状态管理、规则检索后端和可配置的模型接口；尚未公开部署，真实模型联调及真人使用效果仍待验证。
 
 ![开局搭子 TableBuddy 桌面界面](docs/images/desktop.png)
 
@@ -69,7 +69,7 @@ http://127.0.0.1:3186
 
 如果该端口已被其他程序占用，启动器会尝试后续端口，请以窗口显示的 `Local` 地址为准。服务运行期间保持命令窗口打开；关闭网页不会停止后端，在服务窗口按 `Ctrl+C` 可以停止服务。出现 `Terminate batch job (Y/N)?` 时，输入 `Y` 并回车。
 
-启动脚本优先使用本机已有的Codex配套Node，找不到时使用系统Node。其他电脑安装Node后，也可以直接使用下面的命令。
+启动脚本使用系统安装的Node。安装Node后，也可以使用下面的命令。
 
 #### 命令行启动
 
@@ -80,7 +80,7 @@ cd "web"
 npm start
 ```
 
-希望同时自动打开Windows默认浏览器时，可执行：
+希望同时自动打开系统浏览器时，可执行：
 
 ```powershell
 node server.mjs --open
@@ -161,22 +161,27 @@ flowchart TD
 
 项目提供教学和规则查询，不模拟完整棋盘、不记录全部玩家行动，也不替玩家作策略决定。
 
-### 测试与当前进展
+### 验证与当前进展
 
-在 `web` 目录执行：
+版本号以各网页版的 `package.json` 为准；服务端状态接口从该文件读取版本。检查数量、通过情况与执行日期以本次命令输出和生成的报告为准。
+
+在所选版本的 `web` 目录执行：
 
 ```powershell
+npm ci
 npm test
+npm run test:browser
 ```
 
-截至 **2026年10月27日**：
+Vue版另提供 `npm run test:startup`，覆盖生产启动、重复启动、端口避让、开发代理及直接运行Vite。两个版本都使用项目内的Playwright；没有可用浏览器时，先运行 `npx playwright install chromium`。可用 `TABLEBUDDY_CHROME` 指定浏览器程序。
 
-- **63项自动化检查通过**，覆盖教学状态、计分、版本约束、中英切换、检索、模型接口契约、异常回退、HTTP服务与启动器。
-- 其中包含 **32条构造的检索检查题**，属于开发样例，不是用户样本。
-- **19项浏览器流程检查通过**，包含中英文桌面与手机尺寸页面、语言偏好、查询途中切换语言及错误提示；检查宽度为360、390、430像素。
-- 模型接口检查使用模拟响应；尚未完成真实模型联调、手机真机与微信内访问测试，也未取得真人教学效果或付费数据。
+浏览器结果保存在 `web/test-results/browser-check/`，启动结果保存在 `web/test-results/startup-check/`，均由Git忽略。`TABLEBUDDY_EVIDENCE_DIR` 可覆盖结果根目录；脚本会在其下分别建立 `browser-check/` 和 `startup-check/`。生成报告记录本次执行时间。
 
-`tests/browser-check.cjs` 使用本机制作环境的Chrome与Playwright路径，在其他电脑运行前需要调整。首页图片来自本机浏览器自动化截图，其中手机图为尺寸模拟。
+检查覆盖教学状态、参数错误、双语提示、问答日志、重置、规则数据、限流、静态缓存和HTTP接口。模型分支使用可控模拟响应，手机布局使用浏览器尺寸模拟；真实模型、手机真机、微信内访问与真人使用效果列入后续验证。
+
+日志覆盖开局前查询及当前教学过程，包含暂停和结束后的查询事件；导出JSON的 `setupEvents` 保存开局前事件，`session.logs` 保存教学会话事件，`phase` 标记查询阶段。重置会同时清除这些记录、问题输入和进行中的查询。
+
+本地API支持curl等命令行工具省略Origin头。浏览器跨站来源会被拒绝；Origin校验用于浏览器来源限制。公网部署时应在网关配置身份认证和访问配额。
 
 ### 后续计划
 
@@ -203,7 +208,7 @@ TableBuddy is a mobile-friendly board-game teaching assistant for young people w
 
 It breaks the first game into short teaching steps, with optional examples, previous-step review, rule lookup and host confirmation. The initial focus is on young adults playing together in mainland China, sharing one device at the table.
 
-**Current version: 0.3.0 — student project prototype.** A bilingual web interface, teaching-state management, rule-retrieval backend and configurable model adapter are implemented. The project has not been publicly deployed; live model integration and effectiveness with real players still need validation.
+**Student project prototype.** See [package.json](web/package.json) for the current version. A bilingual web interface, teaching-state management, rule-retrieval backend and configurable model adapter are implemented. The project has not been publicly deployed; live model integration and effectiveness with real players still need validation.
 
 ![TableBuddy English desktop interface](docs/images/desktop-en.png)
 
@@ -252,14 +257,14 @@ http://127.0.0.1:3186
 
 If the port is occupied, the launcher tries later ports. Use the actual `Local` address printed in the window. Keep the service window open. Closing the browser does not stop the backend; press `Ctrl+C` in the service window to stop it. If Windows asks `Terminate batch job (Y/N)?`, type `Y` and press Enter.
 
-The Windows launcher first tries the Node runtime bundled with Codex on the current computer, then system Node. On another computer, install Node and run from the repository root:
+The Windows launcher uses the system Node installation. From the repository root, run:
 
 ```powershell
 cd "web"
 npm start
 ```
 
-To also open the Windows default browser automatically:
+To also open the system browser automatically:
 
 ```powershell
 node server.mjs --open
@@ -328,20 +333,25 @@ The project teaches and looks up rules. It does not simulate the whole game, rec
 
 ### Validation and current status
 
-From `web`, run:
+Each web project's `package.json` is the version source; the server derives its status version from it. Test totals, results and execution dates come from the current run and generated reports.
+
+From the selected edition's `web` directory:
 
 ```powershell
+npm ci
 npm test
+npm run test:browser
 ```
 
-As of **27 October 2026**:
+The Vue edition also provides `npm run test:startup`, covering production startup, reuse, occupied ports, the development proxy and direct Vite invocation. Both browser suites use project-local Playwright. Run `npx playwright install chromium` if no suitable browser is installed, or set `TABLEBUDDY_CHROME` to a browser executable.
 
-- **63 automated checks passed**, covering state, scoring, versions, localization, retrieval, model contracts, fallbacks, HTTP handling and startup behavior.
-- The suite includes **32 constructed retrieval questions**, which are development examples rather than participant data.
-- **19 browser-flow checks passed**, covering Chinese/English desktop and mobile-size layouts, language persistence, language changes during a request and error messages. Checked widths are 360, 390 and 430 pixels.
-- Model tests use controlled mock responses. Live model quality, physical phones, WeChat’s in-app browser, real-player teaching outcomes and payment have not been validated.
+Browser evidence is written to `web/test-results/browser-check/`, and startup evidence to `web/test-results/startup-check/`. Both are ignored by Git. `TABLEBUDDY_EVIDENCE_DIR` overrides the output base; scripts create separate `browser-check/` and `startup-check/` subdirectories. Reports record their actual execution time.
 
-`tests/browser-check.cjs` uses local Chrome and Playwright paths from the authoring environment; adjust those paths on another computer. Screenshots come from the local browser; mobile images are viewport simulations.
+Checks cover state, invalid inputs, localized feedback, question logs, reset, rule data, rolling rate limits, asset caching and HTTP behavior. Model responses are mocked and mobile layouts use viewport simulation; live models, physical phones, WeChat and real-player outcomes remain evaluation tasks.
+
+Exports include setup queries in `setupEvents` and teaching-session events in `session.logs`, including paused and completed-session queries. Query events carry a `phase` field. Reset clears these records, the typed question and any pending request.
+
+Local command-line clients may omit Origin. Browser cross-site requests are rejected; Origin checks restrict browser sources. Public deployments should configure authentication and access quotas at the gateway.
 
 ### Next steps
 

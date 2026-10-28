@@ -1,20 +1,24 @@
-const {chromium}=require('C:/Users/Shurong_Liu/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const {chromium}=require('playwright');
 const fs=require('node:fs');
 const path=require('node:path');
 const assert=require('node:assert/strict');
-const OUT=path.resolve(__dirname,'../../authoring/bilingual-checks');
+const OUT=path.resolve(process.env.TABLEBUDDY_EVIDENCE_DIR||path.resolve(__dirname,'../test-results'),'browser-check');
 (async()=>{
  fs.mkdirSync(OUT,{recursive:true});
  const {createApp}=await import('../server.mjs');const server=createApp();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const base='http://127.0.0.1:'+server.address().port;
  let browser;
  const checks=[],errors=[];
  try{
-  browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
+  const chrome=process.env.TABLEBUDDY_CHROME||['C:/Program Files/Google/Chrome/Application/chrome.exe','C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe','/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].find(file=>fs.existsSync(file));
+  browser=await chromium.launch({...(chrome?{executablePath:chrome}:{}),headless:true});
   const desktop=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true});
   const page=await desktop.newPage();page.on('pageerror',error=>errors.push(error.message));
   const response=await page.goto(base);assert.equal(response.status(),200);
   await page.locator('#mode').filter({hasText:'规则检索模式'}).waitFor();assert.equal(await page.locator('.brand-name').innerText(),'开局搭子');assert.match(await page.locator('.brand').innerText(),/TableBuddy/);assert.match(await page.title(),/开局搭子 TableBuddy/);checks.push('网页可访问且准确显示未配置模型');
   await page.screenshot({path:path.join(OUT,'desktop.png'),fullPage:true,animations:'disabled'});
+  await page.locator('#question').fill('没有筹码还能拒收吗');await page.locator('#ask').click();await page.locator('#answer').waitFor({state:'visible'});
+  const setupDownload=page.waitForEvent('download');await page.locator('#export').click();await(await setupDownload).saveAs(path.join(OUT,'setup-log.json'));const setupLog=JSON.parse(fs.readFileSync(path.join(OUT,'setup-log.json'),'utf8'));assert.equal(setupLog.session,null);assert.equal(setupLog.setupEvents.length,1);checks.push('开局前规则查询可独立导出记录');
+
   await page.locator('#start-form button').click();await page.locator('#lesson').waitFor({state:'visible'});
   await page.locator('#more').click();assert.equal(await page.locator('#example').isVisible(),true);assert.match(await page.locator('#progress-text').innerText(),/1 \/ 6/);checks.push('开始教学和举例不跳步');
   await page.locator('#handover').click();assert.equal(await page.locator('#next').isVisible(),false);await page.locator('#resume').click();await page.locator('#next').click();assert.match(await page.locator('#setup-chips').innerText(),/4人，每人11/);checks.push('人工暂停、恢复与按人数提示');
@@ -23,6 +27,10 @@ const OUT=path.resolve(__dirname,'../../authoring/bilingual-checks');
   await page.locator('#question').fill('狼人杀预言家怎么玩');await page.locator('#ask').click();await page.waitForFunction(()=>document.querySelector('#answer-text').textContent.includes('没有找到依据'));checks.push('未知规则问题回退');
   const download=page.waitForEvent('download');await page.locator('#export').click();const file=await download;await file.saveAs(path.join(OUT,'browser-teaching-events.json'));checks.push('教学日志导出');
   for(let i=0;i<5;i++)await page.locator('#next').click();await page.locator('#complete').waitFor({state:'visible'});checks.push('六步教学完成');
+  await page.locator('#question').fill('没有筹码还能拒收吗');await page.locator('#ask').click();await page.locator('#answer').waitFor({state:'visible'});
+  const completeDownload=page.waitForEvent('download');await page.locator('#export').click();await(await completeDownload).saveAs(path.join(OUT,'complete-log.json'));const completeLog=JSON.parse(fs.readFileSync(path.join(OUT,'complete-log.json'),'utf8'));assert.equal(completeLog.session.logs.at(-1).phase,'completed');assert.equal(completeLog.setupEvents.length,1);checks.push('结束后规则查询写入日志并保留开局前记录');
+  page.once('dialog',dialog=>dialog.accept());await page.locator('#restart-complete').click();assert.equal(await page.locator('#question').inputValue(),'');assert.equal(await page.locator('#answer').isVisible(),false);checks.push('重新开始同时清空输入问题和回复');
+
   await desktop.close();
   const mobile=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true});
   const mp=await mobile.newPage();mp.on('pageerror',error=>errors.push(error.message));await mp.goto(base);await mp.locator('#mode').filter({hasText:'规则检索模式'}).waitFor();
@@ -39,8 +47,9 @@ const OUT=path.resolve(__dirname,'../../authoring/bilingual-checks');
   await mp.route('**/api/assistant',async route=>{await new Promise(r=>setTimeout(r,200));try{await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({text:'STALE RESPONSE',mode:'evidence',sources:[],needsHuman:true})});}catch(_) {}});await mp.locator('#ask').click();await mp.locator('#language').selectOption('zh');await mp.waitForTimeout(350);assert.equal(await mp.locator('#answer').isVisible(),false);assert.equal(await mp.locator('#ask').isDisabled(),false);assert.equal(await mp.locator('#step-title').innerText(),'准备好这一桌');checks.push('查询途中换语言不显示旧回复且可重新查询');await mp.unroute('**/api/assistant');
   await mp.locator('#language').selectOption('en');await mp.locator('#lesson-sources').evaluate(el=>{el.open=false;});await mp.setViewportSize({width:390,height:844});await mp.screenshot({path:path.join(OUT,'mobile-lesson-en.png'),fullPage:true,animations:'disabled'});
   const enContext=await browser.newContext({viewport:{width:1440,height:1000}});const ep=await enContext.newPage();ep.on('pageerror',error=>errors.push(error.message));await ep.goto(base);await ep.locator('#language').selectOption('en');await ep.screenshot({path:path.join(OUT,'desktop-en.png'),fullPage:true,animations:'disabled'});assert.ok(!/[\u3400-\u9fff]/.test((await ep.locator('body').innerText()).replace('中文','')));checks.push('英文首页无可见中文残留');await enContext.close();
+  const invalidContext=await browser.newContext();const invalidPage=await invalidContext.newPage();invalidPage.on('pageerror',error=>errors.push(error.message));await invalidPage.goto(base);await invalidPage.locator('#players').evaluate(select=>select.add(new Option('2','2')));await invalidPage.locator('#players').selectOption('2');await invalidPage.locator('#start-form button').click();await invalidPage.locator('#message').filter({hasText:'请选择当前游戏支持的人数'}).waitFor();await invalidPage.locator('#language').selectOption('en');await invalidPage.locator('#message').filter({hasText:'Choose a supported player count'}).waitFor();assert.equal(await invalidPage.locator('#setup').isVisible(),true);checks.push('无效教学参数显示本地化提示且换语言保留提示');await invalidContext.close();
   assert.deepEqual(errors,[]);checks.push('浏览器未捕获JavaScript运行错误');await mobile.close();
-  fs.writeFileSync(path.join(OUT,'browser-checks.json'),JSON.stringify({date:'2026-10-27',environment:'桌面Chrome自动化及手机尺寸模拟，不是真机或微信内测试',checks,errors,modelMode:'evidence',liveModelTested:false},null,2));
+  fs.writeFileSync(path.join(OUT,'browser-checks.json'),JSON.stringify({date:new Date().toISOString().slice(0,10),generatedAt:new Date().toISOString(),environment:'桌面Chrome自动化及手机尺寸模拟，不是真机或微信内测试',checks,errors,modelMode:'evidence',liveModelTested:false},null,2));
   console.log(JSON.stringify({checks:checks.length,errors,screenshots:5,liveModelTested:false}));
  }finally{if(browser)await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);process.exitCode=1;});

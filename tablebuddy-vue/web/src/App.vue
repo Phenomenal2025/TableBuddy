@@ -10,10 +10,10 @@ import CompletePanel from './components/CompletePanel.vue';
 import RuleAssistant from './components/RuleAssistant.vue';
 
 const {language, t} = provideLocale();
-const {session, saved, view, messageKey, resetToken, start, restore, act, reset, exportLog} = useTeaching(language);
+const {session, saved, view, messageKey, resetToken, start, restore, act, reset, exportLog, languageChanged} = useTeaching(language);
 const modeKey = ref('connecting');
 const statusController = new AbortController();
-watch(language, () => { messageKey.value = 'languageChanged'; });
+watch(language, languageChanged);
 onMounted(async () => {
   try {
     const response = await fetch('/api/status', {signal: statusController.signal});
@@ -49,6 +49,10 @@ function downloadLog() {
     </section>
     <div class="workspace">
       <SetupPanel v-if="!session" :can-restore="!!saved" @start="start" @restore="restore" />
+      <section v-else-if="!view" class="panel" role="alert">
+        <p>{{ t('sessionInvalid') }}</p>
+        <button class="primary" @click="restart">{{ t('restart') }}</button>
+      </section>
       <LessonPanel v-else-if="session.status !== 'completed'" :session="session" :view="view" @action="act" />
       <CompletePanel v-else @restart="restart" />
       <RuleAssistant :step-index="session?.stepIndex ?? 0" :reset-token="resetToken" @answered="act('question')" />

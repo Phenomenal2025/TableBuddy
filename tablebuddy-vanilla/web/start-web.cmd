@@ -2,9 +2,5 @@
 setlocal
 chcp 65001 >nul
 cd /d "%~dp0"
-if exist "%USERPROFILE%\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe" (
-  "%USERPROFILE%\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe" server.mjs --open
-) else (
-  node server.mjs --open
-)
+node server.mjs --open
 if errorlevel 1 pause

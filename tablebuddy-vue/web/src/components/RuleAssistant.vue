@@ -13,7 +13,11 @@ const {asking, answer, errorText, ask, clear} = useAssistant({
   language, t, stepIndex: computed(() => props.stepIndex), onAnswered: () => emit('answered'),
 });
 const answerMode = computed(() => answer.value?.mode === 'live' ? 'modelAnswer' : answer.value?.mode === 'fallback' ? 'fallbackAnswer' : 'evidenceAnswer');
-watch(() => props.resetToken, clear);
+watch(() => props.resetToken, () => {
+  clear();
+  question.value = '';
+  questionInput.value?.setCustomValidity('');
+}, {flush: 'sync'});
 watch(language, () => questionInput.value?.setCustomValidity(''));
 function validateQuestion(event) {
   event.target.setCustomValidity(question.value.trim() ? '' : t('emptyQuestion'));

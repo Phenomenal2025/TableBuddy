@@ -12,7 +12,7 @@
 
 项目优先关注中国大陆青年线下聚会的场景：组局者经常需要重复解释规则，新手一次听到太多内容又容易忘记。开局搭子尝试减少这部分负担，同时把现场判断和交流留给玩家。
 
-本仓库保留两个可以独立运行的网页版：**原生版 v0.3.0** 与 **Vue版 v0.4.0**。当前为学生课程实践原型，已实现规则检索和可配置的模型接口，真实模型效果、真人使用效果和付费意愿仍待验证。
+本仓库保留两个可以独立运行的网页版：**原生版**与**Vue版**。当前为学生课程实践原型，已实现规则检索和可配置的模型接口，真实模型效果、真人使用效果和付费意愿仍待验证。
 
 ![开局搭子 TableBuddy 中文桌面界面](tablebuddy-vue/docs/images/desktop.png)
 
@@ -47,7 +47,7 @@
 
 | 对比项 | 原生网页版 | Vue网页版 |
 |---|---|---|
-| 版本 | v0.3.0 | v0.4.0 |
+| 版本 | [package.json](tablebuddy-vanilla/web/package.json) | [package.json](tablebuddy-vue/web/package.json) |
 | 目录 | `tablebuddy-vanilla/web/` | `tablebuddy-vue/web/` |
 | 前端 | HTML、CSS、JavaScript模块 | Vue 3单文件组件、Composition API、Vite |
 | 界面更新 | JavaScript操作页面元素 | Vue模板和响应式状态 |
@@ -84,7 +84,7 @@ cd "tablebuddy-vanilla/web"
 npm start
 ```
 
-无需先执行 `npm install`。Windows下希望同时打开浏览器，可使用 `node server.mjs --open`。
+无需先执行 `npm install`。希望同时打开系统浏览器，可使用 `node server.mjs --open`。
 
 #### 命令行：Vue版
 
@@ -96,7 +96,7 @@ npm ci
 npm start
 ```
 
-`npm start` 先编译再启动；希望同时打开Windows浏览器时，使用 `npm start -- --open`。开发时运行：
+`npm start` 先编译再启动；希望同时打开系统浏览器时，使用 `npm start -- --open`。开发时运行（也可直接使用 `npx vite`）：
 
 ```powershell
 npm run dev
@@ -180,27 +180,25 @@ flowchart TD
 
 ### 验证与当前进展
 
-最近一次保存的开发验证记录日期为 **2026年10月27日**：
+版本号以各网页版的 `package.json` 为准；服务端状态接口从该文件读取版本。检查数量、通过情况与执行日期以本次命令输出和生成的报告为准。
 
-| 检查 | 原生版 | Vue版 |
-|---|---|---|
-| 自动化检查 | 63项通过 | 68项通过 |
-| 浏览器流程检查 | 19项通过 | 22项通过 |
-| 额外启动流程检查 | — | 6项通过 |
-
-原生版在其 `web` 目录运行 `npm test`。Vue版在对应目录运行：
+在所选版本的 `web` 目录执行：
 
 ```powershell
+npm ci
 npm test
 npm run test:browser
-npm run test:startup
 ```
 
-Vue浏览器检查使用项目内的Playwright，优先寻找系统Chrome／Edge；没有可用浏览器时，先运行 `npx playwright install chromium`。原生版浏览器脚本保留了制作环境的绝对路径，换电脑运行前需要调整。
+Vue版另提供 `npm run test:startup`，覆盖生产启动、重复启动、端口避让、开发代理及直接运行Vite。两个版本都使用项目内的Playwright；没有可用浏览器时，先运行 `npx playwright install chromium`。可用 `TABLEBUDDY_CHROME` 指定浏览器程序。
 
-检查覆盖教学状态、版本约束、计分、双语、检索、模型契约、错误回退、HTTP服务和启动流程。其中32条检索题是构造的开发样例；模型测试采用模拟响应；手机布局检查为360、390、430像素宽度模拟。
+浏览器结果保存在 `web/test-results/browser-check/`，启动结果保存在 `web/test-results/startup-check/`，均由Git忽略。`TABLEBUDDY_EVIDENCE_DIR` 可覆盖结果根目录；脚本会在其下分别建立 `browser-check/` 和 `startup-check/`。生成报告记录本次执行时间。
 
-尚未完成真实模型效果、手机真机、微信内浏览器、真人教学效果及付费验证。导出的JSON只记录本机教学事件，不是访谈记录、学习成绩或完整对局数据。当前没有账号、跨设备同步、在线支付或公开部署。
+检查覆盖教学状态、参数错误、双语提示、问答日志、重置、规则数据、限流、静态缓存和HTTP接口。模型分支使用可控模拟响应，手机布局使用浏览器尺寸模拟；真实模型、手机真机、微信内访问与真人使用效果列入后续验证。
+
+日志覆盖开局前查询及当前教学过程，包含暂停和结束后的查询事件；导出JSON的 `setupEvents` 保存开局前事件，`session.logs` 保存教学会话事件，`phase` 标记查询阶段。重置会同时清除这些记录、问题输入和进行中的查询。
+
+本地API支持curl等命令行工具省略Origin头。浏览器跨站来源会被拒绝；Origin校验用于浏览器来源限制。公网部署时应在网关配置身份认证和访问配额。
 
 ### 规则范围与后续计划
 
@@ -216,7 +214,7 @@ TableBuddy is a bilingual teaching assistant for young people who host board-gam
 
 The initial focus is on young adults gathering in mainland China. Hosts often repeat explanations, while newcomers can struggle to remember a full introduction. TableBuddy aims to reduce that burden while keeping discussion and judgment at the table.
 
-This repository contains two independently runnable web editions: **vanilla v0.3.0** and **Vue v0.4.0**. It is a student project prototype with rule retrieval and a configurable model adapter. Live model quality, effectiveness with real players and willingness to pay still need validation.
+This repository contains two independently runnable web editions: **vanilla** and **Vue**. It is a student project prototype with rule retrieval and a configurable model adapter. Live model quality, effectiveness with real players and willingness to pay still need validation.
 
 ![TableBuddy English desktop interface](tablebuddy-vue/docs/images/desktop-en.png)
 
@@ -251,7 +249,7 @@ Mobile images are browser viewport simulations.
 
 | Item | Vanilla web edition | Vue web edition |
 |---|---|---|
-| Version | v0.3.0 | v0.4.0 |
+| Version | [package.json](tablebuddy-vanilla/web/package.json) | [package.json](tablebuddy-vue/web/package.json) |
 | Directory | `tablebuddy-vanilla/web/` | `tablebuddy-vue/web/` |
 | Frontend | HTML, CSS and JavaScript modules | Vue 3 SFCs, Composition API and Vite |
 | UI updates | DOM manipulation and event handlers | Templates and reactive state |
@@ -290,7 +288,7 @@ npm ci
 npm start
 ```
 
-`npm start` builds before serving. Use `npm start -- --open` to open the Windows browser. For hot updates while editing `.vue` files:
+`npm start` builds before serving. Use `npm start -- --open` to open the Windows browser. For hot updates while editing `.vue` files (direct `npx vite` works too):
 
 ```powershell
 npm run dev
@@ -333,21 +331,27 @@ Both editions follow the architecture shown above: browser teaching state and lo
 
 Implementation details: [vanilla guide](tablebuddy-vanilla/web/README.md#english), [Vue guide](tablebuddy-vue/web/README.md#english), and [Vue migration guide](tablebuddy-vue/vue-migration.md#english).
 
-### Validation and status
+### Validation and current status
 
-The latest saved development records are dated **27 October 2026**:
+Each web project's `package.json` is the version source; the server derives its status version from it. Test totals, results and execution dates come from the current run and generated reports.
 
-| Check | Vanilla | Vue |
-|---|---|---|
-| Automated checks | 63 passed | 68 passed |
-| Browser-flow checks | 19 passed | 22 passed |
-| Additional launcher checks | — | 6 passed |
+From the selected edition's `web` directory:
 
-Run `npm test` in the relevant web directory. The Vue edition also provides `npm run test:browser` and `npm run test:startup`. Its browser checks use the local Playwright dependency and installed Chrome/Edge; run `npx playwright install chromium` if no suitable browser is available. The vanilla browser script retains authoring-machine paths that need adjustment on another computer.
+```powershell
+npm ci
+npm test
+npm run test:browser
+```
 
-Coverage includes state, versions, scoring, localization, retrieval, model contracts, fallbacks, HTTP handling and startup behavior. The 32 retrieval questions are constructed development examples. Model responses are mocked; mobile layouts are tested at simulated widths of 360, 390 and 430 pixels.
+The Vue edition also provides `npm run test:startup`, covering production startup, reuse, occupied ports, the development proxy and direct Vite invocation. Both browser suites use project-local Playwright. Run `npx playwright install chromium` if no suitable browser is installed, or set `TABLEBUDDY_CHROME` to a browser executable.
 
-Live models, physical phones, WeChat browsing, real-player learning outcomes and payment remain unvalidated. Exported JSON contains local teaching events, not interviews, learning scores or complete game histories. Accounts, cross-device synchronization, payments and public hosting are not implemented.
+Browser evidence is written to `web/test-results/browser-check/`, and startup evidence to `web/test-results/startup-check/`. Both are ignored by Git. `TABLEBUDDY_EVIDENCE_DIR` overrides the output base; scripts create separate `browser-check/` and `startup-check/` subdirectories. Reports record their actual execution time.
+
+Checks cover state, invalid inputs, localized feedback, question logs, reset, rule data, rolling rate limits, asset caching and HTTP behavior. Model responses are mocked and mobile layouts use viewport simulation; live models, physical phones, WeChat and real-player outcomes remain evaluation tasks.
+
+Exports include setup queries in `setupEvents` and teaching-session events in `session.logs`, including paused and completed-session queries. Query events carry a `phase` field. Reset clears these records, the typed question and any pending request.
+
+Local command-line clients may omit Origin. Browser cross-site requests are rejected; Origin checks restrict browser sources. Public deployments should configure authentication and access quotas at the gateway.
 
 ### Rules and next steps
 

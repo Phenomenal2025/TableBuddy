@@ -1,6 +1,8 @@
 export const game = {
   id: 'no-thanks-base', version: 'amigo-2024-base-v1',
   title: 'No Thanks!', subtitle: '基础玩法带新助手', minPlayers: 3, maxPlayers: 7,
+  startingChips: {3: 11, 4: 11, 5: 11, 6: 9, 7: 7}, setupStepId: 'setup',
+  cardRange: {min: 3, max: 35},
   scope: '依据AMIGO 2024英文规则整理，仅含基础玩法；不含绿色、粉色特效卡。',
   source: { title: 'AMIGO 2024 English Rules', url: 'https://blog.amigo-spiele.de/content/ap/rule/02455-GB-AmigoRule.pdf' },
   rules: [

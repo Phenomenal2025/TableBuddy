@@ -1,3 +1,4 @@
+import {APP_VERSION} from '../server.mjs';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {once} from 'node:events';
@@ -48,7 +49,7 @@ try {
   assert.equal(original.listening, true);
   checks.push('Vue启动器自动避让模拟的异目录旧版服务端口');
   const status = await (await fetch(productionUrl + '/api/status')).json();
-  assert.equal(status.version, '0.4.0-vue');
+  assert.equal(status.version, APP_VERSION);
   const html = await (await fetch(productionUrl)).text();
   assert.match(html, /\/assets\/index-[^" ]+\.js/);
   checks.push('启动入口实际完成Vue编译并提供新版页面');
@@ -64,7 +65,7 @@ try {
   const devUrl = await development.ready;
   assert.equal((await fetch(devUrl + 'src/App.vue')).status, 200);
   const devStatus = await (await fetch(devUrl + 'api/status')).json();
-  assert.equal(devStatus.version, '0.4.0-vue');
+  assert.equal(devStatus.version, APP_VERSION);
   const response = await fetch(devUrl + 'api/assistant', {method: 'POST',
     headers: {'Content-Type': 'application/json', Origin: devUrl.replace(/\/$/, '')},
     body: JSON.stringify({gameId: 'no-thanks-base', gameVersion: 'amigo-2024-base-v1', stepIndex: 0, question: '没有筹码还能拒收吗', language: 'zh'})});
@@ -74,9 +75,22 @@ try {
   await stop(development.child);
   await assert.rejects(fetch(devUrl, {signal: AbortSignal.timeout(1000)}));
   checks.push('停止开发服务后不再提供页面');
-  const outputDirectory = resolve(root, '../authoring/vue-refactor-checks');
+  const direct = launch(['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', '0'], port, /Local:\s+(http:\/\/127\.0\.0\.1:\d+\/?)/);
+  const directUrl = await direct.ready;
+  const directStatus = await (await fetch(directUrl + 'api/status')).json();
+  assert.equal(directStatus.version, APP_VERSION);
+  const directAsk = await fetch(directUrl + 'api/assistant', {method: 'POST', headers: {'Content-Type': 'application/json', Origin: directUrl.replace(/\/$/, '')},
+    body: JSON.stringify({gameId: 'no-thanks-base', gameVersion: 'amigo-2024-base-v1', stepIndex: 0, question: '没有筹码还能拒收吗', language: 'zh'})});
+  assert.equal(directAsk.status, 200);
+  const crossSite = await fetch(directUrl + 'api/assistant', {method: 'POST', headers: {'Content-Type': 'application/json', Origin: 'https://other.invalid'}, body: '{}'});
+  assert.equal(crossSite.status, 403);
+  checks.push('直接运行Vite自动连接API且保持来源校验');
+  await stop(direct.child);
+  await assert.rejects(fetch(directUrl, {signal: AbortSignal.timeout(1000)}));
+  checks.push('关闭直接运行的Vite后停止页面服务');
+  const outputDirectory = resolve(process.env.TABLEBUDDY_EVIDENCE_DIR || resolve(root, 'test-results'), 'startup-check');
   await mkdir(outputDirectory, {recursive: true});
-  await writeFile(resolve(outputDirectory, 'startup-checks.json'), JSON.stringify({date: '2026-10-27', checks}, null, 2));
+  await writeFile(resolve(outputDirectory, 'startup-checks.json'), JSON.stringify({date: new Date().toISOString().slice(0, 10), generatedAt: new Date().toISOString(), checks}, null, 2));
   console.log(JSON.stringify({startupChecks: checks.length}));
 } finally {
   for (const child of owned) await stop(child);

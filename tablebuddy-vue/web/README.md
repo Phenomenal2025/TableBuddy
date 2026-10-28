@@ -6,7 +6,7 @@
 
 中文品牌名为**开局搭子**，英文名为 **TableBuddy**。网页版中文模式同时显示两者，英文模式仅显示TableBuddy。
 
-这是独立副本的网页部分，版本 **0.4.0**。前端已改为真正的Vue 3单文件组件（`.vue`），由Vite编译；教学状态、规则内容、检索和Node后端继续沿用原项目逻辑。中英切换、举例、暂停、进度恢复及日志导出均保留。
+这是独立副本的网页部分，版本见[package.json](package.json)。前端已改为真正的Vue 3单文件组件（`.vue`），由Vite编译；教学状态、规则内容、检索和Node后端继续沿用原项目逻辑。中英切换、举例、暂停、进度恢复及日志导出均保留。
 
 ### 直接使用
 
@@ -23,7 +23,7 @@ npm start
 
 需要同时打开浏览器时，执行 `npm start -- --open`。
 
-保持服务窗口打开。结束时按 `Ctrl+C`；出现 `Terminate batch job (Y/N)?`，输入 `Y` 并回车。关闭浏览器不会停止服务。启动器优先使用本机Codex配套Node，找不到时使用系统Node。
+保持服务窗口打开。结束时按 `Ctrl+C`；出现 `Terminate batch job (Y/N)?`，输入 `Y` 并回车。关闭浏览器不会停止服务。启动器使用系统安装的Node。
 
 ### 修改代码
 
@@ -71,9 +71,25 @@ npm run test:browser
 npm run test:startup
 ```
 
-2026年10月27日，本副本通过 **68项自动化检查、22项浏览器流程检查和6项启动检查**。浏览器测试使用项目内Playwright，优先寻找系统Chrome／Edge，也可通过 `TABLEBUDDY_CHROME` 指定路径。没有可用浏览器时先运行 `npx playwright install chromium`。
+版本号以各网页版的 `package.json` 为准；服务端状态接口从该文件读取版本。检查数量、通过情况与执行日期以本次命令输出和生成的报告为准。
 
-结果与截图保存在 `../authoring/vue-refactor-checks/`。32条检索题是构造的开发样例，模型接口测试使用模拟响应；手机图片是尺寸模拟，尚未验证手机真机、微信内浏览器或真实模型效果。教学事件导出不是访谈记录或学习成绩。
+在所选版本的 `web` 目录执行：
+
+```powershell
+npm ci
+npm test
+npm run test:browser
+```
+
+Vue版另提供 `npm run test:startup`，覆盖生产启动、重复启动、端口避让、开发代理及直接运行Vite。两个版本都使用项目内的Playwright；没有可用浏览器时，先运行 `npx playwright install chromium`。可用 `TABLEBUDDY_CHROME` 指定浏览器程序。
+
+浏览器结果保存在 `test-results/browser-check/`，启动结果保存在 `test-results/startup-check/`，均由Git忽略。`TABLEBUDDY_EVIDENCE_DIR` 可覆盖结果根目录；脚本会在其下分别建立 `browser-check/` 和 `startup-check/`。生成报告记录本次执行时间。
+
+检查覆盖教学状态、参数错误、双语提示、问答日志、重置、规则数据、限流、静态缓存和HTTP接口。模型分支使用可控模拟响应，手机布局使用浏览器尺寸模拟；真实模型、手机真机、微信内访问与真人使用效果列入后续验证。
+
+日志覆盖开局前查询及当前教学过程，包含暂停和结束后的查询事件；导出JSON的 `setupEvents` 保存开局前事件，`session.logs` 保存教学会话事件，`phase` 标记查询阶段。重置会同时清除这些记录、问题输入和进行中的查询。
+
+本地API支持curl等命令行工具省略Origin头。浏览器跨站来源会被拒绝；Origin校验用于浏览器来源限制。公网部署时应在网关配置身份认证和访问配额。
 
 规则包为No Thanks!基础玩法，依据[AMIGO 2024英文规则](https://blog.amigo-spiele.de/content/ap/rule/02455-GB-AmigoRule.pdf)整理，不含特效卡。中英说明是项目教学摘要，使用前应核对实体游戏版本。
 
@@ -81,11 +97,11 @@ npm run test:startup
 
 ## English
 
-This independent **0.4.0** edition uses Vue 3 Single-File Components (`.vue`) compiled by Vite. It retains the original teaching logic, rules, retrieval and Node API, with Chinese/English switching, examples, host confirmation, local progress and log export.
+This independent edition uses Vue 3 Single-File Components (`.vue`) compiled by Vite. It retains the original teaching logic, rules, retrieval and Node API, with Chinese/English switching, examples, host confirmation, local progress and log export.
 
 ### Run and develop
 
-Install **Node.js 22.12 or newer**. On Windows, double-click `start-web.cmd`. It installs missing dependencies with `npm ci`, builds the frontend and opens the browser. The first installation requires internet access. It prefers Codex’s bundled Node when available, then system Node.
+Install **Node.js 22.12 or newer**. On Windows, double-click `start-web.cmd`. It installs missing dependencies with `npm ci`, builds the frontend and opens the browser. The first installation requires internet access. It uses system Node.
 
 Alternatively, run from this directory:
 
@@ -96,7 +112,7 @@ npm start
 
 Use `npm start -- --open` to open the Windows browser too. The default URL is `http://127.0.0.1:3186`; use the actual printed Local URL if another service occupies that port. Keep the terminal open, and stop with `Ctrl+C` (then `Y` if Windows prompts). Closing the browser does not stop the backend.
 
-For hot updates while editing `.vue` files:
+For hot updates while editing `.vue` files (direct `npx vite` works too):
 
 ```powershell
 npm run dev
@@ -126,9 +142,25 @@ npm run test:browser
 npm run test:startup
 ```
 
-On October 27, 2026, **68 automated checks, 22 browser-flow checks and 6 launcher checks passed**. Browser tests use the local Playwright dependency and installed Chrome/Edge; `TABLEBUDDY_CHROME` can override the executable path. If no suitable browser is installed, run `npx playwright install chromium`.
+Each web project's `package.json` is the version source; the server derives its status version from it. Test totals, results and execution dates come from the current run and generated reports.
 
-Evidence is in `../authoring/vue-refactor-checks/`. The 32 retrieval questions are constructed development examples. Model responses are mocked; mobile screenshots simulate viewport sizes. No real-device, WeChat, live model, user outcome or payment validation has been completed.
+From the selected edition's `web` directory:
+
+```powershell
+npm ci
+npm test
+npm run test:browser
+```
+
+The Vue edition also provides `npm run test:startup`, covering production startup, reuse, occupied ports, the development proxy and direct Vite invocation. Both browser suites use project-local Playwright. Run `npx playwright install chromium` if no suitable browser is installed, or set `TABLEBUDDY_CHROME` to a browser executable.
+
+Browser evidence is written to `test-results/browser-check/`, and startup evidence to `test-results/startup-check/`. Both are ignored by Git. `TABLEBUDDY_EVIDENCE_DIR` overrides the output base; scripts create separate `browser-check/` and `startup-check/` subdirectories. Reports record their actual execution time.
+
+Checks cover state, invalid inputs, localized feedback, question logs, reset, rule data, rolling rate limits, asset caching and HTTP behavior. Model responses are mocked and mobile layouts use viewport simulation; live models, physical phones, WeChat and real-player outcomes remain evaluation tasks.
+
+Exports include setup queries in `setupEvents` and teaching-session events in `session.logs`, including paused and completed-session queries. Query events carry a `phase` field. Reset clears these records, the typed question and any pending request.
+
+Local command-line clients may omit Origin. Browser cross-site requests are rejected; Origin checks restrict browser sources. Public deployments should configure authentication and access quotas at the gateway.
 
 The candidate game is the base version of No Thanks!, summarized from [AMIGO’s 2024 English rules](https://blog.amigo-spiele.de/content/ap/rule/02455-GB-AmigoRule.pdf). Verify the physical edition before use. Neither language is an official translation.
 
